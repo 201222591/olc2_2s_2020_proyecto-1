@@ -1,0 +1,49 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <div id="textArea">
+            <textarea id="mainText" name="mainText" rows="30" cols="100"></textarea> <br/><br/>
+            <input type="file" name="inputfile" id="inputfile"> 
+            <input type="button" value="Traducir" onclick=""/>
+            <input type="button" value="Analizar" onclick="analize();"/>
+        </div>
+        <p id="result">
+            Resultado 
+        </p>
+        <textarea readonly id="console" name="console" rows="15" cols="100" class="console">>></textarea><br/><br/>
+    </body>
+
+    <script src="calc.js"></script>
+    <script src="translator.js"></script>
+    <script src="executor.js"></script>
+
+    <script type="text/javascript"> 
+        document.getElementById('inputfile') 
+            .addEventListener('change', function() { 
+                var fr=new FileReader(); 
+                fr.onload=function(){ 
+                    document.getElementById('mainText') 
+                            .textContent=fr.result; 
+                }     
+                fr.readAsText(this.files[0]); 
+        }) 
+    </script> 
+
+    <script type="text/javascript">
+        function analize()
+        {
+            var toParse = document.getElementById("mainText").value;
+            var result = calc.parse(toParse);
+            saveGlobal(result[0]);
+            execute(result[0]);
+            //console.log(result[0]);
+            document.getElementById('console').innerHTML = consoleOutput;
+            console.log(globalStack.stack);
+            //console.log(semanticErrors);
+            //document.getElementById("result").innerHTML = result;
+        }
+    </script>
+    
+</html>
