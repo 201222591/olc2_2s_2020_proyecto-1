@@ -1,0 +1,10 @@
+var a;
+if(false)
+{
+}
+while(true)
+{
+}
+function fun1()
+{
+}
