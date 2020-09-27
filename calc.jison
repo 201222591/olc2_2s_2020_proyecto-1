@@ -5,6 +5,11 @@
 
 %%
 
+/* Espacios en blanco */
+\s+											// se ignoran espacios en blanco
+"//".*										// comentario simple línea
+[/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]			// comentario multiple líneas
+
 ";"                 return 'SEMICOLON';
 ","                 return 'COMMA';
 ":"                 return 'COLON';
@@ -81,9 +86,7 @@
 
 
 
-/* Espacios en blanco */
-[ \r\t]+            {}
-\n                  {}
+
 
 [0-9]+("."[0-9]+)?\b    				return 'DECIMAL';
 [0-9]+\b                				return 'INTEGER';

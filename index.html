@@ -51,23 +51,21 @@
             semanticErrors = [];
             var toParse = document.getElementById("mainText").value;
             var result = calc.parse(toParse);
-            //var astResult = ast.generate(toParse);
+            
             loadErrors();
             if(result != null)
             {
                 //console.log(result[0]);
                 saveGlobal(result[0]);
                 execute(result[0]);
+                ast.parse(toParse);
                 document.getElementById('console').innerHTML = consoleOutput;
 
-                //astAddress += astResult[0];
+                astAddress += dotData;
                 astAddress += '}';
 
                 getURL();
-                //console.log(globalStack.stack);
-                //console.log(semanticErrors);
-                //document.getElementById("result").innerHTML = result;
-                // | error { console.error('Este es un error sintáctico: ' + yytext + ', en la linea: ' + this._$.first_line + ', en la columna: ' + this._$.first_column); }
+                
             }
         }
 

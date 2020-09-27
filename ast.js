@@ -98,7 +98,7 @@ case 2:
 		this.$ = decls;
 	
 break;
-case 3: case 21: case 55: case 57: case 60: case 62: case 70:
+case 3:
 
 		this.$ = null;
 	
@@ -108,171 +108,355 @@ case 4:
 		this.$ = $$[$0-3];
 	
 break;
-case 5: case 14: case 15: case 16: case 17: case 18: case 22: case 30: case 37: case 40: case 46: case 50: case 51: case 52: case 61: case 63: case 64: case 74: case 76: case 78: case 80: case 82: case 84: case 86: case 89: case 94: case 97: case 100: case 104: case 110: case 113:
+case 5:
 
 		this.$ = $$[$0];
 	
 break;
 case 6:
 
-        let stringFuncDecl1 = 'func_decl'+nodeCounter;
-		let func_decl1 =  stringFuncDecl1+'->'+$$[$0-6]+';';
-        func_decl1 += stringFuncDecl1+'->'+$$[$0-5]+';';
-        func_decl1 += stringFuncDecl1+'->'+$$[$0-3]+';';
-        func_decl1 += stringFuncDecl1+'->'+$$[$0-1]+';';
-        func_decl1 += stringFuncDecl1+'->'+$$[$0]+';';
-        dotData += func_decl1;
-        this.$ = stringFuncDecl1;
-        nodeCounter++;
+        this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"func_decl\"];'
+		dotData += nodeCounter+'->'+$$[$0-6]+';';
+		dotData += nodeCounter+'->'+$$[$0-5]+';';
+		dotData += nodeCounter+'->'+$$[$0-3]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 7:
 
-		let stringFuncDecl2 = 'func_decl'+nodeCounter;
-		let func_decl2 =  stringFuncDecl2+'->'+$$[$0-5]+';';
-        func_decl2 += stringFuncDecl2+'->'+$$[$0-4]+';';
-        func_decl2 += stringFuncDecl2+'->'+$$[$0-2]+';';
-        func_decl2 += stringFuncDecl2+'->'+$$[$0]+';';
-		dotData += func_decl2;
-        this.$ = stringFuncDecl2;
-        nodeCounter++;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"func_decl\"];'
+		dotData += nodeCounter+'->'+$$[$0-5]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 8:
 
-		let stringFuncDecl3 = 'func_decl'+nodeCounter;
-		let func_decl3 =  stringFuncDecl3+'->'+$$[$0-5]+';';
-        func_decl3 += stringFuncDecl3+'->'+$$[$0-4]+';';
-        func_decl3 += stringFuncDecl3+'->'+$$[$0-1]+';';
-        func_decl3 += stringFuncDecl3+'->'+$$[$0]+';';
-		dotData += func_decl3;
-        this.$ = stringFuncDecl3;
-        nodeCounter++;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"func_decl\"];'
+		dotData += nodeCounter+'->'+$$[$0-5]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 9:
 
-		let stringFuncDecl4 = 'func_decl'+nodeCounter;
-		let func_decl4 =  stringFuncDecl4+'->'+$$[$0-4]+';';
-        func_decl4 += stringFuncDecl4+'->'+$$[$0-3]+';';
-        func_decl4 += stringFuncDecl4+'->'+$$[$0]+';';
-		dotData += func_decl4;
-        this.$ = stringFuncDecl4;
-        nodeCounter++;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"func_decl\"];'
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-3]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 10:
 
-		let paramsList = [$$[$0-2]];
-		if($$[$0] != null)
-		{
-			$$[$0].forEach(element => paramsList.push(element));
-		}
-		this.$ = paramsList;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"params\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 11:
 
-		this.$ = [$$[$0]];
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"params\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 12:
 
-        let stringParam1 = 'param'+nodeCounter;
-        let param1 = stringParam1+'->'+$$[$0-1];
-        param1 += stringParam1+'->'+$$[$0];
-		this.$ = stringParam1;
-        nodeCounter++;
+        this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"param\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 13:
 
-		let stringParam2 = 'param'+nodeCounter;
-        let param2 = stringParam2+'->'+$$[$0];
-        param2 += stringParam2+'->'+$$[$01];
-		this.$ = stringParam2;
-        nodeCounter++;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"param\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
-case 19: case 23: case 58: case 122:
+case 14:
 
-		this.$ = $$[$0-1];
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"return_type\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 15: case 16: case 17: case 18:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"type\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 19:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"block_decl\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+
+		nodeCounter++;
 	
 break;
 case 20:
 
-		let stmList = [$$[$0-1]];
-		if($$[$0] != null)
-		{
-			$$[$0].forEach(element => stmList.push(element));
-		}
-		this.$ = stmList;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm_list\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
-case 24: case 31:
+case 21: case 55: case 70:
 
-		this.$ = create_ifelse($$[$0-4], $$[$0-2], $$[$0]);
+		this.$ = nodeCounter;
+		nodeCounter++;
 	
 break;
-case 25:
+case 22: case 30:
 
-		this.$ =  create_if($$[$0-2], $$[$0]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
-case 26: case 33:
+case 23:
 
-		this.$ = create_while($$[$0-2], $$[$0]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+
+		nodeCounter++;
 	
 break;
-case 27: case 34:
+case 24:
 
-		this.$ = create_for($$[$0-6], $$[$0-4], $$[$0-2], $$[$0]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-6]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
-case 28: case 35:
+case 25: case 26:
 
-		this.$ =  create_forof($$[$0-4], $$[$0-2], $$[$0]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
-case 29: case 36:
+case 27:
 
-		this.$ =  create_forin($$[$0-4], $$[$0-2], $$[$0]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-8]+';';
+		dotData += nodeCounter+'->'+$$[$0-6]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 28: case 29:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-7]+';';
+		dotData += nodeCounter+'->'+$$[$0-5]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 31:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-6]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 32:
 
-		this.$ = create_if($$[$0-2], $$[$0]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		dotData += nodeCounter+'->'+$$[$02]+';';
+		dotData += nodeCounter+'->'+$$[$04]+';';
+
+		nodeCounter++;
+	
+break;
+case 33:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 34:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-8]+';';
+		dotData += nodeCounter+'->'+$$[$0-6]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 35: case 36:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-7]+';';
+		dotData += nodeCounter+'->'+$$[$0-5]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 37:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 38:
 
-		this.$ = create_dowhile($$[$0-2], $$[$0-5]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-6]+';';
+		dotData += nodeCounter+'->'+$$[$0-5]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+
+		nodeCounter++;
 	
 break;
 case 39:
 
-		this.$ = create_switch($$[$0-4], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-6]+';';
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+
+		nodeCounter++;
 	
 break;
-case 41:
+case 40: case 46:
 
-		// does nothing
-		this.$ = $$[$0-1];
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
-case 42:
+case 41: case 42: case 43:
 
-		this.$ = create_break();
-	
-break;
-case 43:
+		this.$ = nodeCounter;
 
-		this.$ =  create_continue();
+		dotData += nodeCounter+'[label=\"normal_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		
+		nodeCounter++;
 	
 break;
 case 44:
 
-		this.$ = create_return($$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		
+		nodeCounter++;
 	
 break;
 case 45:
@@ -282,170 +466,438 @@ case 45:
 break;
 case 47:
 
-		this.$ = create_consolelog($$[$0-2]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];'
+		dotData += nodeCounter+'->consoleLog;';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+
+		nodeCounter++;
 	
 break;
 case 48:
 
-		this.$ = create_graficarTS();
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-3]+';';
+
+		nodeCounter++;
 	
 break;
 case 49:
 
-		let varList = [$$[$0-1]];
-		if($$[$0] != null)
-		{
-			$$[$0].forEach(element => varList.push(element));
-		}
-		this.$ = create_declaration($$[$0-2], varList);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"var_decl\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 50: case 51: case 52:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"scope\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 53:
 
-		let element = {
-			model: 'VarElement',
-			id: $$[$0-2],
-			type: $$[$0-1] == null? null : $$[$0-1].type,
-			array: $$[$0-1] == null? null : $$[$0-1].array,
-			value: $$[$0]
-		};
-		this.$ = element;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"var_element\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 54:
 
-		let a = [$$[$0-1]];
-		if($$[$0] != null)
-		{
-			$$[$0].forEach(element => a.push(element));
-			this.$ = a;
-		}
-		else
-		{
-			this.$ = a;
-		}
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"var_list\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 56:
 
-		let t = {
-			type: $$[$0-1],
-			array: $$[$0]
-		};
-		this.$ = t;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"dec_type\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 57: case 60: case 62:
+
+		this.$ = nodeCounter;
+
+		nodeCounter++;
+	
+break;
+case 58:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"array\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+
+		nodeCounter++;
 	
 break;
 case 59:
 
-		this.$ = '[]';
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"array\"];'		
+
+		nodeCounter++;
+	
+break;
+case 61:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"dec_assign\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
+	
+break;
+case 63: case 64:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"arg\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 66:
 
-		let c1 = create_case($$[$0-5], $$[$0-2]);
-		let cases1 = [c1];
-		if($$[$0] != null)
-		{
-			$$[$0].forEach(element => {
-				cases1.push(element);
-			});
-		}
-		this.$ = cases1;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"case_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-6]+';';
+		dotData += nodeCounter+'->'+$$[$0-5]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 67:
 
-		let c2 = create_case($$[$0-3], $$[$0-1]);
-		let cases2 = [c2];
-		if($$[$0] != null)
-		{
-			$$[$0].forEach(element => {
-				cases2.push(element);
-			});
-		}
-		this.$ = cases2;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"case_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-3]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+
+		nodeCounter++;
 	
 break;
 case 68:
 
-		this.$ = [create_case('default', $$[$0-1])];
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"case_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		
+		nodeCounter++;
 	
 break;
 case 69:
 
-		this.$ = [create_case('default', $$[$0])];
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"case_stm\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
 case 71:
 
-		if($$[$0-2].model == 'Expression')
-		{
-			//create array with [expr, op_assign]
-			let e = create_expression_element($$[$0]);
-			let arr = [$$[$0-2], e];
-			this.$ = arr;
-		}
-		else
-		{
-			// add a new expression element to the list
-			this.$.push(create_expression_element($$[$0]));
-		}
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"expr\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
 case 72:
 
-		this.$ = create_expression_element($$[$0]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"expr\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
 case 73:
 
-		this.$ = create_assignoperation($$[$0-2], $$[$0], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_assign\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 74:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_assign\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
 case 75:
 
-		this.$ = create_ternaryoperation($$[$0-4], $$[$0-2], $$[$0]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_ternary\"];'
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
-case 77: case 79:
+case 76:
 
-		this.$ = create_logicaloperation($$[$0-2], $$[$0], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_if\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
-case 81: case 83: case 85:
+case 77:
 
-		this.$ = create_bitwiseoperation($$[$0-2], $$[$0], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_or\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
-case 87: case 88: case 90: case 91: case 92: case 93:
+case 78:
 
-		this.$ = create_relationaloperation($$[$0-2], $$[$0], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_or\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		nodeCounter++;
+	
+break;
+case 79:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_and\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 80: case 82: case 84: case 86: case 89: case 110:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_or\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 81:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_bin_or\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 83:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_bin_xor\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 85:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_bin_and\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 87: case 88:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_equate\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 90: case 91: case 92: case 93:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_compare\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 94:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_compare\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
 case 95: case 96:
 
-		this.$ = create_shiftoperation($$[$0-2], $$[$0], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_shift\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
-case 98: case 99: case 101: case 102: case 103:
+case 97:
 
-		this.$ = create_arithmeticoperation($$[$0-2], $$[$0], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_shift\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 98: case 99:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_add\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 100:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_add\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 101: case 102: case 103:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_mult\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
+	
+break;
+case 104:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_mult\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
 case 105: case 106: case 109:
 
-		this.$ = create_unaryoperation($$[$0], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
 case 107:
 
 		// RANDOM COMMENT
-		this.$ = create_unaryoperation($$[$0-1], '++');
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		
+		nodeCounter++;
 	
 break;
 case 108:
 
-		this.$ = create_unaryoperation($$[$0-1], '--');
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		
+		nodeCounter++;
 	
 break;
 case 111:
@@ -458,78 +910,121 @@ case 111:
 break;
 case 112:
 
-		//array access
-		let arrayList = [];
-		let ArrayAccess = 
-		{
-			model: 'ArrayAccess',
-			id: $$[$0-3],
-			index: $$[$0-1],
-		};
-		this.$ = ArrayAccess;
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_pointer\"];'
+		dotData += nodeCounter+'->'+$$[$0-3]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		
+		nodeCounter++;
 	
 break;
-case 114: case 115:
+case 113:
 
-		this.$ = create_number($$[$0]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_pointer\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
-case 116:
+case 114: case 115: case 116: case 117:
 
-		var s = $$[$0].replace(/\"/g, "");
-		var s2 = s.replace(/\'/g, "");
-		this.$ = create_string(s2);
-	
-break;
-case 117:
+		this.$ = nodeCounter;
 
-		if($$[$0] == 'true' || $$[$0] == 'false')
-		{
-			this.$ = create_boolean($$[$0]);
-		}
-		else
-		{
-			this.$ = create_variable($$[$0]);
-		}
+		dotData += nodeCounter+'[label=\"value\"];'
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
 case 118:
 
 		//function call
-		this.$ = create_call($$[$0-3], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];'
+		dotData += nodeCounter+'->'+$$[$0-3]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		
+		nodeCounter++;
 	
 break;
 case 119:
 
 		//function call
-		this.$ = create_call($$[$0-2], null);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		
+		nodeCounter++;
 	
 break;
 case 120:
 
 		//array assignment [elements]
-		this.$ = create_arrayassignment($$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		
+		nodeCounter++;
 	
 break;
 case 121:
 
 		//array assignment []
-		this.$ = create_arrayassignment(null);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];'
+		
+		nodeCounter++;
+	
+break;
+case 122:
+
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];'
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		
+		nodeCounter++;
 	
 break;
 case 123:
 
-		this.$ = create_push($$[$0-5], $$[$0-1]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];'
+		dotData += nodeCounter+'->'+$$[$0-5]+';';
+		dotData += nodeCounter+'->'+$$[$0-3]+';';
+		dotData += nodeCounter+'->'+$$[$0-1]+';';
+		
+		nodeCounter++;
 	
 break;
 case 124:
 
-		this.$ = create_pop($$[$0-4]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];'
+		dotData += nodeCounter+'->'+$$[$0-4]+';';
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		
+		nodeCounter++;
 	
 break;
 case 125:
 
-		this.$ = create_length($$[$0-2]);
+		this.$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];'
+		dotData += nodeCounter+'->'+$$[$0-2]+';';
+		dotData += nodeCounter+'->'+$$[$0]+';';
+		
+		nodeCounter++;
 	
 break;
 }
@@ -1011,148 +1506,150 @@ options: {"case-insensitive":true},
 performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
 var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
-case 0:return 29;
+case 0:// se ignoran espacios en blanco
 break;
-case 1:return 18;
+case 1:// comentario simple línea
 break;
-case 2:return 19;
+case 2:// comentario multiple líneas
 break;
-case 3:return 8;
+case 3:return 29;
 break;
-case 4:return 12;
+case 4:return 18;
 break;
-case 5:return 14;
+case 5:return 19;
 break;
-case 6:return 57;
+case 6:return 8;
 break;
-case 7:return 58;
+case 7:return 12;
 break;
-case 8:return 25;
+case 8:return 14;
 break;
-case 9:return 26;
+case 9:return 57;
 break;
-case 10:return 97;
+case 10:return 58;
 break;
-case 11:return 98;
+case 11:return 25;
 break;
-case 12:return 88;
+case 12:return 26;
 break;
-case 13:return 90;
+case 13:return 97;
 break;
-case 14:return 91;
+case 14:return 98;
 break;
-case 15:return 93;
+case 15:return 88;
 break;
-case 16:return 94;
+case 16:return 90;
 break;
-case 17:return 87;
+case 17:return 91;
 break;
-case 18:return 85;
+case 18:return 93;
 break;
-case 19:return 83;
+case 19:return 94;
 break;
-case 20:return 84;
+case 20:return 87;
 break;
-case 21:return 80;
+case 21:return 85;
 break;
-case 22:return 82;
+case 22:return 83;
 break;
-case 23:return 79;
+case 23:return 84;
 break;
-case 24:return 69;
+case 24:return 80;
 break;
-case 25:return 67;
+case 25:return 82;
 break;
-case 26:return 95;
+case 26:return 79;
 break;
-case 27:return 75;
+case 27:return 69;
 break;
-case 28:return 71;
+case 28:return 67;
 break;
-case 29:return 96;
+case 29:return 95;
 break;
-case 30:return 73;
+case 30:return 75;
 break;
-case 31:return 30;
+case 31:return 71;
 break;
-case 32:return 32;
+case 32:return 96;
 break;
-case 33:return 42;
+case 33:return 73;
 break;
-case 34:return 61;
+case 34:return 30;
 break;
-case 35:return 63;
+case 35:return 32;
 break;
-case 36:return 44;
+case 36:return 42;
 break;
-case 37:return 45;
+case 37:return 61;
 break;
-case 38:return 46;
+case 38:return 63;
 break;
-case 39:return 33;
+case 39:return 44;
 break;
-case 40:return 41;
+case 40:return 45;
 break;
-case 41:return 34;
+case 41:return 46;
 break;
-case 42:return 38;
+case 42:return 33;
 break;
-case 43:return 37;
+case 43:return 41;
 break;
-case 44:return 47;
+case 44:return 34;
 break;
-case 45:return 48;
+case 45:return 38;
 break;
-case 46:return 66;
+case 46:return 37;
 break;
-case 47:return 77;
+case 47:return 47;
 break;
-case 48:return 59;
+case 48:return 48;
 break;
-case 49:return 21;
+case 49:return 66;
 break;
-case 50:return 22;
+case 50:return 77;
 break;
-case 51:return 23;
+case 51:return 59;
 break;
-case 52:return 24;
+case 52:return 21;
 break;
-case 53:return 'TYPES';
+case 53:return 22;
 break;
-case 54:return 101;
+case 54:return 23;
 break;
-case 55:return 102;
+case 55:return 24;
 break;
-case 56:return 103;
+case 56:return 'TYPES';
 break;
-case 57:return 52;
+case 57:return 101;
 break;
-case 58:return 53;
+case 58:return 102;
 break;
-case 59:return 36;
+case 59:return 103;
 break;
-case 60:return 10;
+case 60:return 52;
 break;
-case 61:
+case 61:return 53;
 break;
-case 62:
+case 62:return 36;
 break;
-case 63:return 100;
+case 63:return 10;
 break;
-case 64:return 'INTEGER';
+case 64:return 100;
 break;
-case 65:return 22;
+case 65:return 'INTEGER';
 break;
-case 66:return	'NAME';
+case 66:return 22;
 break;
-case 67:return 5;
+case 67:return	'NAME';
 break;
-case 68: console.error('Este es un error léxico: ' + yy_.yytext + ', en la linea: ' + yy_.yylloc.first_line + ', en la columna: ' + yy_.yylloc.first_column); 
+case 68:return 5;
+break;
+case 69: console.error('Este es un error léxico: ' + yy_.yytext + ', en la linea: ' + yy_.yylloc.first_line + ', en la columna: ' + yy_.yylloc.first_column); 
 break;
 }
 },
-rules: [/^(?:;)/i,/^(?:,)/i,/^(?::)/i,/^(?:\.)/i,/^(?:\()/i,/^(?:\))/i,/^(?:\[)/i,/^(?:\])/i,/^(?:\{)/i,/^(?:\})/i,/^(?:\+\+)/i,/^(?:--)/i,/^(?:\+)/i,/^(?:-)/i,/^(?:\*)/i,/^(?:\/)/i,/^(?:%)/i,/^(?:>>)/i,/^(?:<<)/i,/^(?:<=)/i,/^(?:>=)/i,/^(?:<)/i,/^(?:>)/i,/^(?:!=)/i,/^(?:&&)/i,/^(?:\|\|)/i,/^(?:!)/i,/^(?:&)/i,/^(?:\|)/i,/^(?:~)/i,/^(?:\^)/i,/^(?:if\b)/i,/^(?:else\b)/i,/^(?:switch\b)/i,/^(?:case\b)/i,/^(?:default\b)/i,/^(?:break\b)/i,/^(?:continue\b)/i,/^(?:return\b)/i,/^(?:while\b)/i,/^(?:do\b)/i,/^(?:for\b)/i,/^(?:in\b)/i,/^(?:of\b)/i,/^(?:console\.log\b)/i,/^(?:graficar_ts\b)/i,/^(?:\?)/i,/^(?:==)/i,/^(?:=)/i,/^(?:number\b)/i,/^(?:string\b)/i,/^(?:boolean\b)/i,/^(?:void\b)/i,/^(?:types\b)/i,/^(?:push\b)/i,/^(?:pop\b)/i,/^(?:length\b)/i,/^(?:let\b)/i,/^(?:const\b)/i,/^(?:var\b)/i,/^(?:function\b)/i,/^(?:[ \r\t]+)/i,/^(?:\n)/i,/^(?:[0-9]+(\.[0-9]+)?\b)/i,/^(?:[0-9]+\b)/i,/^(?:((").*?("))|((').*?(')))/i,/^(?:[a-zA-Z_][a-aA-Z_0-9]*)/i,/^(?:$)/i,/^(?:.)/i],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68],"inclusive":true}}
+rules: [/^(?:\s+)/i,/^(?:\/\/.*)/i,/^(?:[/][*][^*]*[*]+([^/*][^*]*[*]+)*[/])/i,/^(?:;)/i,/^(?:,)/i,/^(?::)/i,/^(?:\.)/i,/^(?:\()/i,/^(?:\))/i,/^(?:\[)/i,/^(?:\])/i,/^(?:\{)/i,/^(?:\})/i,/^(?:\+\+)/i,/^(?:--)/i,/^(?:\+)/i,/^(?:-)/i,/^(?:\*)/i,/^(?:\/)/i,/^(?:%)/i,/^(?:>>)/i,/^(?:<<)/i,/^(?:<=)/i,/^(?:>=)/i,/^(?:<)/i,/^(?:>)/i,/^(?:!=)/i,/^(?:&&)/i,/^(?:\|\|)/i,/^(?:!)/i,/^(?:&)/i,/^(?:\|)/i,/^(?:~)/i,/^(?:\^)/i,/^(?:if\b)/i,/^(?:else\b)/i,/^(?:switch\b)/i,/^(?:case\b)/i,/^(?:default\b)/i,/^(?:break\b)/i,/^(?:continue\b)/i,/^(?:return\b)/i,/^(?:while\b)/i,/^(?:do\b)/i,/^(?:for\b)/i,/^(?:in\b)/i,/^(?:of\b)/i,/^(?:console\.log\b)/i,/^(?:graficar_ts\b)/i,/^(?:\?)/i,/^(?:==)/i,/^(?:=)/i,/^(?:number\b)/i,/^(?:string\b)/i,/^(?:boolean\b)/i,/^(?:void\b)/i,/^(?:types\b)/i,/^(?:push\b)/i,/^(?:pop\b)/i,/^(?:length\b)/i,/^(?:let\b)/i,/^(?:const\b)/i,/^(?:var\b)/i,/^(?:function\b)/i,/^(?:[0-9]+(\.[0-9]+)?\b)/i,/^(?:[0-9]+\b)/i,/^(?:((").*?("))|((').*?(')))/i,/^(?:[a-zA-Z_][a-aA-Z_0-9]*)/i,/^(?:$)/i,/^(?:.)/i],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69],"inclusive":true}}
 });
 return lexer;
 })();
