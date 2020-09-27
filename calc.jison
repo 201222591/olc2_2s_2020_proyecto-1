@@ -92,7 +92,10 @@
 
 
 <<EOF>>                 return 'EOF';
-.                       { console.error('Este es un error léxico: ' + yytext + ', en la linea: ' + yylloc.first_line + ', en la columna: ' + yylloc.first_column); }
+.                       {
+							lexicalErrors.push(new Error('Error léxico en el token '+ yytext+'.', yylloc.first_line, yylloc.first_column));
+							console.error('Error léxico: ' + yytext + ', en la linea: ' + yylloc.first_line + ', en la columna: ' + yylloc.first_column);
+						}
 /lex
 
 /* Asociación de operadores y precedencia */
@@ -319,7 +322,7 @@
 	{
 		this.model = 'Call';
 		this.id = id;
-		this.parameters;
+		this.parameters = parameters;
 	};
 
 	var Push = function(arr, expression)
@@ -562,6 +565,10 @@ S
 	{
 		return $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ' + yytext + '.', this._$.first_line, this._$.first_column));
+	}
 ;
 
 decls
@@ -578,16 +585,24 @@ decls
 	{
 		$$ = null;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ' + yytext + '.', this._$.first_line, this._$.first_column));
+	}
 ;
 
 decl
-	: func_decl
+	: func_decl DOT DOT DOT
 	{
 		$$ = $1;
 	}
 	| stm_list
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -608,21 +623,55 @@ func_decl
 	{
 		$$ = create_function(null, $2, null, $5);
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 params
 	: param COMMA params
 	{
-		let params = [$1];
+		let paramsList = [$1];
 		if($3 != null)
 		{
-			$3.forEach(element => params.push(element));
+			$3.forEach(element => paramsList.push(element));
 		}
-		$$ = params;
+		$$ = paramsList;
 	}
 	| param
 	{
-		$$ = $1;
+		$$ = [$1];
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
+	
+;
+
+param
+	: NAME return_type
+	{
+		let param1 = {
+			model: 'Parameter',
+			id: $1,
+			type: $2
+		};
+		$$ = param1;
+	}
+	| NAME
+	{
+		let param2 = {
+			model: 'Parameter',
+			id: $1,
+			type: null
+		}; 
+		$$ = param2;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -630,6 +679,10 @@ return_type
 	: COLON type
 	{
 		$$ = $2;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -650,12 +703,20 @@ type
 	{
 		$$ = $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 block_decl
 	: L_CURLY stm_list R_CURLY
 	{
 		$$ = $2;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -676,7 +737,11 @@ stm_list
 ;
 
 stm
-	: var_decl SEMICOLON
+	: func_decl
+	{
+		$$ = $1;
+	}
+	| var_decl SEMICOLON
 	{
 		$$ = $1;
 	}
@@ -708,6 +773,11 @@ stm
 	{
 		$$ = $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ' + yytext, this._$.first_line, this._$.first_column));
+	}
+	
 ;
 
 then_stm
@@ -738,6 +808,10 @@ then_stm
 	| normal_stm
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -787,6 +861,10 @@ normal_stm
 	{
 		$$ = create_graficarTS();
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 var_decl
@@ -798,6 +876,10 @@ var_decl
 			$3.forEach(element => varList.push(element));
 		}
 		$$ = create_declaration($1, varList);
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -814,6 +896,10 @@ scope
 	{
 		$$ = $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 var_element
@@ -827,6 +913,10 @@ var_element
 			value: $3
 		};
 		$$ = element;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -940,6 +1030,10 @@ case_stm
 	{
 		$$ = null;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 expr
@@ -962,6 +1056,10 @@ expr
 	{
 		$$ = create_expression_element($1);
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 op_assign
@@ -972,6 +1070,10 @@ op_assign
 	| op_if
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -984,6 +1086,10 @@ op_if
 	{
 		$$ = $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 op_or
@@ -994,6 +1100,10 @@ op_or
 	| op_and
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -1006,6 +1116,10 @@ op_and
 	{
 		$$ = $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 op_bin_or
@@ -1016,6 +1130,10 @@ op_bin_or
 	| op_bin_xor
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -1028,6 +1146,10 @@ op_bin_xor
 	{
 		$$ = $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 op_bin_and
@@ -1038,6 +1160,10 @@ op_bin_and
 	| op_equate
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -1053,6 +1179,10 @@ op_equate
 	| op_compare
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -1077,6 +1207,10 @@ op_compare
 	{
 		$$ = $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 op_shift
@@ -1091,6 +1225,10 @@ op_shift
 	| op_add
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -1107,6 +1245,10 @@ op_add
 	{
 		$$ = $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 op_mult
@@ -1116,7 +1258,7 @@ op_mult
 	}
 	| op_mult DIVIDE op_unary
 	{
-		$ = create_arithmeticoperation($1, $3, $2);
+		$$ = create_arithmeticoperation($1, $3, $2);
 	}
 	| op_mult REMAINDER op_unary
 	{
@@ -1125,6 +1267,10 @@ op_mult
 	| op_unary
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -1154,6 +1300,10 @@ op_unary
 	{
 		$$ = $1;
 	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
+	}
 ;
 
 op_pointer
@@ -1179,6 +1329,10 @@ op_pointer
 	| value
 	{
 		$$ = $1;
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;
 
@@ -1243,5 +1397,9 @@ value
 	| NAME DOT LENGTH
 	{
 		$$ = create_length($1);
+	}
+	| error
+	{
+		syntaxErrors.push(new Error('Token no esperado: ', this._$.first_line, this._$.first_column));
 	}
 ;

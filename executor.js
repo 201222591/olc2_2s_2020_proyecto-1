@@ -137,11 +137,19 @@ var syntaxErrors = [];
 var semanticErrors = [];
 //Console output
 var consoleOutput='>>';
+// AST URL
+var astAddress = 'https://dreampuf.github.io/GraphvizOnline/#digraph{';
+var dotData = '';
+var nodeCounter = 0;
 
 function saveGlobal(ast)
 {
     // save global variables and outer functions on TS
     globalStack.stack = [];
+    /*lexicalErrors = [];
+    syntaxErrors = [];
+    semanticErrors = [];*/
+
     let globalTS = new SymbolTable();
 
     if(ast != null)
@@ -149,7 +157,7 @@ function saveGlobal(ast)
         ast.forEach(stm => {
             if(stm.model == 'Function')
             {
-                let f = new Symbol('Function', stm.returnType, stm.id, null, 0, 'VAR');
+                let f = new Symbol('Function', stm.returnType, stm.id, stm.statements, stm.parameters, 'VAR');
                 globalTS.symbols.push(f);
             }
         });
@@ -165,7 +173,8 @@ function execute(ast)
         ast.forEach(stm => {
             if(stm.model == 'Function')
             {
-                //skip, already added to ts
+                // add a flag to check if the saveglobal procedure already saved global functions
+                // every other function that enters here, is a child function
             }
             else if(stm.model == 'Declaration')
             {
@@ -278,19 +287,131 @@ function executeExpression(stm)
     {
         if(stm.model == 'Call')
         {
-            
+            let tsIndex = globalStack.stack[0].symbols.length-1
+            for(let i=0; i<=tsIndex; i++)
+            {
+                let f = globalStack.stack[0].symbols[i];
+                if(f.id == stm.id && f.type == 'Function')
+                {
+                    //verify number of parameters
+                    let p_number1 = f.length == null ? 0 : f.length.length;
+                    let p_number2 = stm.parameters == null ? 0 : stm.parameters.length;
+                    if(p_number1 == p_number2)
+                    {
+                        // new ts for the function
+                        let ts = new SymbolTable();
+                        for(let i=0; i<=p_number1-1; i++)
+                        {
+                            ////////////
+                            let paramName = f.length[i].id;
+                            let paramValue = executeExpression(stm.parameters[i]);
+                            ////////////
+                            let paramType = f.length[i].type;
+                            let typesMatch = (paramType == null || paramType == typeof paramValue)? true: false;
+                            if(typesMatch)
+                            {
+                                // add each parameter = value to ts
+                                let sym = new Symbol('Declaration', paramType, paramName, paramValue, null, 'let');
+                                ts.symbols.push(sym);
+                            }
+                            else
+                            {
+                                //param type does not match
+                            }
+                        }
+                        globalStack.stack.push(ts);
+                        execute(f.value);
+                        globalStack.stack.pop();
+                    }
+                    else
+                    {
+                        //number of params does not match
+                    }
+                }
+            }
+            return null;
         }
         else if(stm.model == 'Push')
         {
-            console.log('Pushing '+stm.value2+ ' into array '+stm.value1);
+            let tsIndex = globalStack.stack.length-1;
+            for(let i=tsIndex; i>=0; i--)
+            {
+                let symIndex = globalStack.stack[i].symbols.length-1;
+                for(let j=0; j<=symIndex; j++)
+                {
+                    if(globalStack.stack[i].symbols[j].id == stm.value1)
+                    {
+                        if(globalStack.stack[i].symbols[j].length == '[]')
+                        {
+                            let value2 = executeExpression(stm.value2);
+                            globalStack.stack[i].symbols[j].value.push(value2);
+                            return true;
+                        }
+                        else
+                        {
+                            semanticErrors.push(new Error('No se puede hacer PUSH. La variable no es un arreglo', 0, 0));
+                            return null;
+                        }
+                    }
+                    else continue;
+                }
+            }
+            semanticErrors.push(new Error('No se encontró el símbolo '+stm.id, 0, 0));
+            return null;
         }
         else if(stm.model == 'Pop')
         {
-            console.log('Popping top value from '+stm.value);
+            let tsIndex = globalStack.stack.length-1;
+            for(let i=tsIndex; i>=0; i--)
+            {
+                let symIndex = globalStack.stack[i].symbols.length-1;
+                for(let j=0; j<=symIndex; j++)
+                {
+                    if(globalStack.stack[i].symbols[j].id == stm.value)
+                    {
+                        if(globalStack.stack[i].symbols[j].length == '[]')
+                        {
+                            let popped = globalStack.stack[i].symbols[j].value.pop();
+                            return popped;
+                        }
+                        else
+                        {
+                            semanticErrors.push(new Error('No se puede hacer POP. La variable no es un arreglo', 0, 0));
+                            return null;
+                        }
+                    }
+                    else continue;
+                }
+            }
+            semanticErrors.push(new Error('No se encontró el símbolo '+stm.id, 0, 0));
+            return null;
         }
         else if(stm.model == 'Length')
         {
-            console.log('Getting length for array '+stm.value);
+            let tsIndex = globalStack.stack.length-1;
+            for(let i=tsIndex; i>=0; i--)
+            {
+                let symIndex = globalStack.stack[i].symbols.length-1;
+                for(let j=0; j<=symIndex; j++)
+                {
+                    if(globalStack.stack[i].symbols[j].id == stm.value)
+                    {
+                        if(globalStack.stack[i].symbols[j].length == '[]')
+                        {
+                            let l = globalStack.stack[i].symbols[j].value.length;
+                            return l;
+                        }
+                        else
+                        {
+                            semanticErrors.push(new Error('No se puede hacer LENGTH. La variable no es un arreglo', 0, 0));
+                            return null;
+                        }
+                    }
+                    else continue;
+                }
+            }
+            semanticErrors.push(new Error('No se encontró el símbolo '+stm.id, 0, 0));
+            return null;
         }
         else if(stm.model == 'ArrayAssignment')
         {
@@ -573,7 +694,7 @@ function executeForIn(stm)
     }
     else
     {
-        //ERROR. ARRAY DOES NOT EXIST
+        semanticErrors.push(new Error('No existe el arreglo '+ stm.id, 0, 0));
     }
 }
 
@@ -612,7 +733,7 @@ function executeForOf(stm)
     }
     else
     {
-        //ERROR. ARRAY DOES NOT EXIST
+        semanticErrors.push(new Error('No existe el arreglo '+ stm.id, 0, 0));
     }
 }
 
@@ -631,6 +752,11 @@ function executeSwitch(stm)
 function executeGraficarts(stm)
 {
     console.log(globalStack.stack[globalStack.stack.length-1]);
+    consoleOutput += '\nID \t\t\t VALUE\n';
+    globalStack.stack[globalStack.stack.length-1].symbols.forEach(sym =>{
+        consoleOutput += sym.id + '\t\t\t' + sym.value + '\n';
+    });
+    consoleOutput += '>>';
 }
 
 function executeConsolelog(stm)
