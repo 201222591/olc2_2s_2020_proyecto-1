@@ -355,6 +355,8 @@ function executeExpression(stm)
                             else
                             {
                                 //param type does not match
+                                semanticErrors.push(new Error('No existe el parámetro', 0, 0));
+                                return null
                             }
                         }
                         globalStack.stack.push(ts);
@@ -365,6 +367,8 @@ function executeExpression(stm)
                     else
                     {
                         //number of params does not match
+                        semanticErrors.push(new Error('No coincide el número de parámetros', 0, 0));
+                        return null;
                     }
                 }
             }
@@ -485,7 +489,7 @@ function executeExpression(stm)
                     }
                     else continue;
                 }
-                // this part is only reached if symbol is not found in any ts
+                semanticErrors.push(new Error('No existe el símbolo', 0, 0));
                 return null;
             }
             else
