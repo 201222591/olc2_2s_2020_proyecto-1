@@ -12,6 +12,7 @@
                         <input type="button" value="Traducir" onclick=""/>
                         <input type="button" value="Analizar" onclick="analize();"/> <br/><br>
                         <textarea readonly id="console" name="console" rows="15" cols="100" class="console">>></textarea><br/><br/>
+                        <input type="button" value="Limpiar" onclick="clearConsole()"/>
                     </div>
                 </td>
                 <td>
@@ -72,6 +73,12 @@
         function getURL()
         {
             document.getElementById("astLink").setAttribute("href",astAddress);
+        }
+
+        function clearConsole()
+        {
+            document.getElementById('console').innerHTML = '>>';
+            consoleOutput = '>>';
         }
 
         function loadErrors()

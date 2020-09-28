@@ -170,85 +170,123 @@ function execute(ast)
 {
     if(ast != null)
     {
-        ast.forEach(stm => {
-            if(stm.model == 'Function')
+        for(let i=0; i<=ast.length-1; i++){
+            if(ast[i].model == 'Function')
             {
                 // add a flag to check if the saveglobal procedure already saved global functions
                 // every other function that enters here, is a child function
             }
-            else if(stm.model == 'Declaration')
+            else if(ast[i].model == 'Declaration')
             {
-                executeDeclaration(stm);
+                executeDeclaration(ast[i]);
             }
-            else if(stm.model == 'Expression')
+            else if(ast[i].model == 'Expression')
             {
-                executeExpression(stm);
+                var res = executeExpression(ast[i]);
+                return res;
             }
-            else if(stm.model == 'If')
-            {
-                let ts = new SymbolTable();
-                globalStack.stack.push(ts);
-                executeIf(stm);
-                globalStack.stack.pop();
-            }
-            else if(stm.model == 'IfElse')
+            else if(ast[i].model == 'If')
             {
                 let ts = new SymbolTable();
                 globalStack.stack.push(ts);
-                executeIfelse(stm);
+                executeIf(ast[i]);
                 globalStack.stack.pop();
             }
-            else if(stm.model == 'While')
+            else if(ast[i].model == 'IfElse')
             {
                 let ts = new SymbolTable();
                 globalStack.stack.push(ts);
-                executeWhile(stm);
+                executeIfelse(ast[i]);
                 globalStack.stack.pop();
             }
-            else if(stm.model == 'DoWhile')
+            else if(ast[i].model == 'While')
             {
                 let ts = new SymbolTable();
                 globalStack.stack.push(ts);
-                executeDowhile(stm);
+                breakStack.push(0);
+                continueStack.push(0);
+                executeWhile(ast[i]);
                 globalStack.stack.pop();
+                breakStack.pop();
+                continueStack.pop();
             }
-            else if(stm.model == 'For')
+            else if(ast[i].model == 'DoWhile')
             {
                 let ts = new SymbolTable();
                 globalStack.stack.push(ts);
-                executeFor(stm);
+                breakStack.push(0);
+                continueStack.push(0);
+                executeDowhile(ast[i]);
                 globalStack.stack.pop();
+                breakStack.pop();
+                continueStack.pop();
             }
-            else if(stm.model == 'ForOf')
+            else if(ast[i].model == 'For')
             {
                 let ts = new SymbolTable();
                 globalStack.stack.push(ts);
-                executeForOf(stm);
+                executeFor(ast[i]);
                 globalStack.stack.pop();
+                breakStack.pop();
+                continueStack.pop();
             }
-            else if(stm.model == 'ForIn')
+            else if(ast[i].model == 'ForOf')
             {
                 let ts = new SymbolTable();
                 globalStack.stack.push(ts);
-                executeForIn(stm);
+                breakStack.push(0);
+                continueStack.push(0);
+                executeForOf(ast[i]);
                 globalStack.stack.pop();
+                breakStack.pop();
+                continueStack.pop();
             }
-            else if(stm.model == 'Switch')
+            else if(ast[i].model == 'ForIn')
             {
                 let ts = new SymbolTable();
                 globalStack.stack.push(ts);
-                executeSwitch(stm);
+                breakStack.push(0);
+                continueStack.push(0);
+                executeForIn(ast[i]);
                 globalStack.stack.pop();
+                breakStack.pop();
+                continueStack.pop();
             }
-            else if(stm.model == 'GraficarTS')
+            else if(ast[i].model == 'Switch')
             {
-                executeGraficarts(stm);
+                let ts = new SymbolTable();
+                globalStack.stack.push(ts);
+                breakStack.push(0);
+                executeSwitch(ast[i]);
+                globalStack.stack.pop();
+                breakStack.pop();
             }
-            else if(stm.model == 'ConsoleLog')
+            else if(ast[i].model == 'GraficarTS')
             {
-                executeConsolelog(stm);
+                executeGraficarts(ast[i]);
             }
-        });
+            else if(ast[i].model == 'ConsoleLog')
+            {
+                executeConsolelog(ast[i]);
+            }
+            else if(ast[i].model == 'Break')
+            {
+                i=ast.length;
+            }
+            else if(ast[i].model == 'Continue')
+            {
+                continue;
+            }
+            else if(ast[i].model == 'Return')
+            {
+                if(ast[i].value != null)
+                {
+                    var res = executeExpression(ast[i].value);
+                    return res;
+                }
+                else return null;
+            }
+        }
     }
 }
 
@@ -320,7 +358,8 @@ function executeExpression(stm)
                             }
                         }
                         globalStack.stack.push(ts);
-                        execute(f.value);
+                        var res = execute(f.value);
+                        if(res != null) return res;
                         globalStack.stack.pop();
                     }
                     else
