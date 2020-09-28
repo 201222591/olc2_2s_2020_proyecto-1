@@ -780,12 +780,19 @@ function executeSwitch(stm)
 {
     let cond = executeExpression(stm.condition);
     let cases = stm.cases;
+    let caseMatch = false;
+    let defCase = null;
     cases.forEach(c => {
         let v2 = executeExpression(c.value);
+        defCase = v2 == 'default'? c : null;
         let compare =  cond == v2;
-        if(compare) execute(c.statements);
+        if(compare) 
+        {
+            execute(c.statements);
+            caseMatch = true;
+        }
     });
-    
+    if(!caseMatch && defCase != null) execute(defCase.statements);
 }
 
 function executeGraficarts(stm)

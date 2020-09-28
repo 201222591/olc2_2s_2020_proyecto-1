@@ -357,12 +357,14 @@ case 82:
 break;
 case 83:
 
-		this.$ = [create_case('default', $$[$0-1])];
+		let defString1 = create_string('default');
+		this.$ = [create_case(defString1, $$[$0-1])];
 	
 break;
 case 84:
 
-		this.$ = [create_case('default', $$[$0])];
+		let defString2 = create_string('default');
+		this.$ = [create_case(defString2, $$[$0])];
 	
 break;
 case 87:

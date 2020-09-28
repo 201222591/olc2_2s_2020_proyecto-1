@@ -1023,11 +1023,13 @@ case_stm
 	}
 	| DEFAULT COLON L_CURLY stm_list R_CURLY
 	{
-		$$ = [create_case('default', $4)];
+		let defString1 = create_string('default');
+		$$ = [create_case(defString1, $4)];
 	}
 	| DEFAULT COLON stm_list
 	{
-		$$ = [create_case('default', $3)];
+		let defString2 = create_string('default');
+		$$ = [create_case(defString2, $3)];
 	}
 	|
 	{
