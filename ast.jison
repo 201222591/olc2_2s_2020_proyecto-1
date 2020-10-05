@@ -581,6 +581,14 @@ normal_stm
 		
 		nodeCounter++;
 	}
+	| RETURN SEMICOLON
+	{
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];'
+		
+		nodeCounter++;
+	}
 	| SEMICOLON
 	{
 		// does nothing

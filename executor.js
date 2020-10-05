@@ -130,6 +130,7 @@ var Error = function(message, row, col)
 var globalStack = new TsStack();
 var continueStack = [];
 var breakStack = [];
+var returnStack = [];
 
 //Error lists
 var lexicalErrors = [];
@@ -141,6 +142,10 @@ var consoleOutput='>>';
 var astAddress = 'https://dreampuf.github.io/GraphvizOnline/#digraph{';
 var dotData = '';
 var nodeCounter = 0;
+// flag declaration inside a function
+var insideFunction = false;
+// flag to check if called function is a child function
+var isChildFunction = false;
 
 function saveGlobal(ast)
 {
@@ -157,7 +162,7 @@ function saveGlobal(ast)
         ast.forEach(stm => {
             if(stm.model == 'Function')
             {
-                let f = new Symbol('Function', stm.returnType, stm.id, stm.statements, stm.parameters, 'VAR');
+                let f = new Symbol('Function', stm.returnType, stm.id, stm.statements, stm.parameters, 'var');
                 globalTS.symbols.push(f);
             }
         });
@@ -171,10 +176,19 @@ function execute(ast)
     if(ast != null)
     {
         for(let i=0; i<=ast.length-1; i++){
+            let v = ast[i].model;
             if(ast[i].model == 'Function')
             {
                 // add a flag to check if the saveglobal procedure already saved global functions
                 // every other function that enters here, is a child function
+                if(insideFunction)
+                {
+                    //console.log('DECLARING CHILD FUNCTION '+ast[i].id);
+                    let f = new Symbol('Function', ast[i].returnType, ast[i].id, ast[i].statements, ast[i].parameters, 'var');
+                    globalStack.stack[globalStack.stack.length-1].symbols.push(f);
+                }
+
+
             }
             else if(ast[i].model == 'Declaration')
             {
@@ -183,7 +197,7 @@ function execute(ast)
             else if(ast[i].model == 'Expression')
             {
                 var res = executeExpression(ast[i]);
-                return res;
+                //return res;
             }
             else if(ast[i].model == 'If')
             {
@@ -202,31 +216,31 @@ function execute(ast)
             else if(ast[i].model == 'While')
             {
                 let ts = new SymbolTable();
-                globalStack.stack.push(ts);
+                //globalStack.stack.push(ts);
                 breakStack.push(0);
                 continueStack.push(0);
                 executeWhile(ast[i]);
-                globalStack.stack.pop();
+                //globalStack.stack.pop();
                 breakStack.pop();
                 continueStack.pop();
             }
             else if(ast[i].model == 'DoWhile')
             {
                 let ts = new SymbolTable();
-                globalStack.stack.push(ts);
+                //globalStack.stack.push(ts);
                 breakStack.push(0);
                 continueStack.push(0);
                 executeDowhile(ast[i]);
-                globalStack.stack.pop();
+                //globalStack.stack.pop();
                 breakStack.pop();
                 continueStack.pop();
             }
             else if(ast[i].model == 'For')
             {
                 let ts = new SymbolTable();
-                globalStack.stack.push(ts);
+                //globalStack.stack.push(ts);
                 executeFor(ast[i]);
-                globalStack.stack.pop();
+                //globalStack.stack.pop();
                 breakStack.pop();
                 continueStack.pop();
             }
@@ -285,6 +299,14 @@ function execute(ast)
                     return res;
                 }
                 else return null;
+                /*let returnValue = ast[i].value ? executeExpression(ast[i].value) : null;
+                let functionType = returnStack[returnStack.length-1];
+                let expectedType = null;
+                let givenType = typeof returnValue;
+                if(functionType == 'void') expectedType = null;
+                else expectedType = functionType;
+                if(expectedType == givenType) console.log('too bien');
+                else console.log('too mal');*/
             }
         }
     }
@@ -326,49 +348,58 @@ function executeExpression(stm)
         if(stm.model == 'Call')
         {
             let tsIndex = globalStack.stack[0].symbols.length-1
-            for(let i=0; i<=tsIndex; i++)
+            // SAVE
+            for(let j=globalStack.stack.length-1; j>=0; j--)
             {
-                let f = globalStack.stack[0].symbols[i];
-                if(f.id == stm.id && f.type == 'Function')
+                for(let i=0; i<=tsIndex; i++)
                 {
-                    //verify number of parameters
-                    let p_number1 = f.length == null ? 0 : f.length.length;
-                    let p_number2 = stm.parameters == null ? 0 : stm.parameters.length;
-                    if(p_number1 == p_number2)
+                    let f = globalStack.stack[j].symbols[i];
+                    if(f!=null && f.id == stm.id && f.type == 'Function')
                     {
-                        // new ts for the function
-                        let ts = new SymbolTable();
-                        for(let i=0; i<=p_number1-1; i++)
+                        //verify number of parameters
+                        let p_number1 = f.length == null ? 0 : f.length.length;
+                        let p_number2 = stm.parameters == null ? 0 : stm.parameters.length;
+                        if(p_number1 == p_number2)
                         {
-                            ////////////
-                            let paramName = f.length[i].id;
-                            let paramValue = executeExpression(stm.parameters[i]);
-                            ////////////
-                            let paramType = f.length[i].type;
-                            let typesMatch = (paramType == null || paramType == typeof paramValue)? true: false;
-                            if(typesMatch)
+                            // new ts for the function
+                            let ts = new SymbolTable();
+                            for(let i=0; i<=p_number1-1; i++)
                             {
-                                // add each parameter = value to ts
-                                let sym = new Symbol('Declaration', paramType, paramName, paramValue, null, 'let');
-                                ts.symbols.push(sym);
+                                ////////////
+                                let paramName = f.length[i].id;
+                                let paramValue = executeExpression(stm.parameters[i]);
+                                ////////////
+                                let paramType = f.length[i].type;
+                                let typesMatch = (paramType == null || paramType == typeof paramValue)? true: false;
+                                if(typesMatch)
+                                {
+                                    // add each parameter = value to ts
+                                    let sym = new Symbol('Declaration', paramType, paramName, paramValue, null, 'let');
+                                    ts.symbols.push(sym);
+                                }
+                                else
+                                {
+                                    //param type does not match
+                                    semanticErrors.push(new Error('No existe el parámetro', 0, 0));
+                                    return null
+                                }
                             }
-                            else
-                            {
-                                //param type does not match
-                                semanticErrors.push(new Error('No existe el parámetro', 0, 0));
-                                return null
-                            }
+                            globalStack.stack.push(ts);
+                            insideFunction = true;
+                            returnStack.push(f.returnType);
+                            var res = execute(f.value);
+                            returnStack.pop();
+                            globalStack.stack.pop();
+                            insideFunction = false;
+                            /*if(res != null)*/ return res;
+                            
                         }
-                        globalStack.stack.push(ts);
-                        var res = execute(f.value);
-                        if(res != null) return res;
-                        globalStack.stack.pop();
-                    }
-                    else
-                    {
-                        //number of params does not match
-                        semanticErrors.push(new Error('No coincide el número de parámetros', 0, 0));
-                        return null;
+                        else
+                        {
+                            //number of params does not match
+                            semanticErrors.push(new Error('No coincide el número de parámetros', 0, 0));
+                            return null;
+                        }
                     }
                 }
             }
@@ -646,8 +677,28 @@ function executeDeclaration(stm)
             {
 
             }
-            let d = new Symbol('Declaration', varType, dec.id, val, dec.array, stm.scope);
-            globalStack.stack[globalStack.stack.length-1].symbols.push(d);
+            //verify if types match
+            if(typeof val == varType || val == null)
+            {
+                let d = new Symbol('Declaration', varType, dec.id, val, dec.array, stm.scope);
+                //decide where to store the variable
+                if(stm.scope == 'var')
+                {
+                    if(insideFunction) globalStack.stack[globalStack.stack.length-1].symbols.push(d);
+                    else globalStack.stack[0].symbols.push(d);
+                }
+                else
+                {
+                    globalStack.stack[globalStack.stack.length-1].symbols.push(d);
+                }
+            }
+            else
+            {
+                semanticErrors.push(new Error('No coinciden el tipo de variable y el valor asignado', 0, 0));
+            }
+
+            
+            
         }
         else
         {
@@ -679,14 +730,25 @@ function executeWhile(stm)
 {
     let cond = stm.condition.expression;
     let stms = stm.statements;
-    while(executeExpression(cond)) execute(stms);
+    while(executeExpression(cond))
+    {
+        globalStack.stack.push(new SymbolTable());
+        execute(stms);
+        globalStack.stack.pop();
+    }
 }
 
 function executeDowhile(stm)
 {
     let cond = stm.condition.expression;
     let stms = stm.statements;
-    do execute(stms); while(executeExpression(cond));
+    do
+    {
+        globalStack.stack.push(new SymbolTable());
+        execute(stms); 
+        globalStack.stack.pop();
+    }
+    while(executeExpression(cond));
 }
 
 function executeFor(stm)
@@ -697,8 +759,10 @@ function executeFor(stm)
     let assignation = execute([arg1]);
     while(executeExpression(arg2))
     {
+        globalStack.stack.push(new SymbolTable());
         execute(stm.statements);
         executeExpression(arg3);
+        globalStack.stack.pop();
     }
 }
 

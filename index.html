@@ -53,13 +53,13 @@
             var toParse = document.getElementById("mainText").value;
             var result = calc.parse(toParse);
             
-            loadErrors();
             if(result != null)
             {
                 console.log(result[0]);
                 saveGlobal(result[0]);
                 execute(result[0]);
                 ast.parse(toParse);
+                loadErrors();
                 document.getElementById('console').innerHTML = consoleOutput;
 
                 astAddress += dotData;

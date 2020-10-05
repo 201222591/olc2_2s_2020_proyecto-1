@@ -848,6 +848,11 @@ normal_stm
 	{
 		$$ = create_return($2);
 	}
+	| RETURN SEMICOLON
+	{
+		// return with no expression(2)
+		$$ = create_return('null');
+	}
 	| SEMICOLON
 	{
 		// does nothing
