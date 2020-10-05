@@ -25,6 +25,8 @@
 "++"                return 'INCREMENT';
 "--"                return 'DECREMENT';
 
+"**"				return 'POWER';
+
 "+"                 return 'PLUS';
 "-"                 return 'MINUS';
 "*"                 return 'MULTIPLY';
@@ -226,6 +228,13 @@
 		this.model = "PreOperation";
 		this.operator = operator;
 		this.value = value;
+	};
+
+	var Power = function(value1, value2)
+	{
+		this.model = "Power";
+		this.value1 = value1;
+		this.value2 = value2;
 	};
 
 	var  UnaryOperation = function(value, operator)
@@ -479,6 +488,11 @@
 	{
 		let a = new PreOperation(val, op);
 		return a;
+	}
+	function create_power(val1, val2)
+	{
+		let p = new Power(val1, val2);
+		return p;
 	}
 	function create_unaryoperation(val, op)
 	{
@@ -1305,6 +1319,10 @@ op_unary
 	| MINUS	op_unary
 	{
 		$$ = create_unaryoperation($2, $1);
+	}
+	| op_unary POWER op_pointer
+	{
+		$$ = create_unaryoperation(create_power($1,$3), $2);
 	}
 	| op_pointer
 	{

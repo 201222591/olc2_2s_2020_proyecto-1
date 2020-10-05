@@ -570,6 +570,13 @@ function executeExpression(stm)
             {
                 return -executeExpression(stm.value);
             }
+            else if(op == '**')
+            {
+                // stm.value = Power(val1, val2)
+                let base = executeExpression(stm.value.value1);
+                let exp = executeExpression(stm.value.value2);
+                return base ** exp;
+            }
         }
         else if(stm.model == 'ArithmeticOperation')
         {
