@@ -498,6 +498,7 @@ break;
 case 151:
 
 		//function call
+		
 		this.$ = create_call($$[$0-3], $$[$0-1]);
 	
 break;
