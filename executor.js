@@ -358,6 +358,7 @@ function executeExpression(stm)
                     {
                         //verify number of parameters
                         let p_number1 = f.length == null ? 0 : f.length.length;
+                        let test=stm.parameters;
                         let p_number2 = stm.parameters == null ? 0 : stm.parameters.length;
                         if(p_number1 == p_number2)
                         {
