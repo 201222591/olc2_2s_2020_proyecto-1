@@ -203,15 +203,17 @@ function execute(ast)
             {
                 let ts = new SymbolTable();
                 globalStack.stack.push(ts);
-                executeIf(ast[i]);
+                let value = executeIf(ast[i]);
                 globalStack.stack.pop();
+                //return value;
             }
             else if(ast[i].model == 'IfElse')
             {
                 let ts = new SymbolTable();
                 globalStack.stack.push(ts);
-                executeIfelse(ast[i]);
+                let value = executeIfelse(ast[i]);
                 globalStack.stack.pop();
+                if(value != null) return value;
             }
             else if(ast[i].model == 'While')
             {
@@ -293,12 +295,19 @@ function execute(ast)
             }
             else if(ast[i].model == 'Return')
             {
-                if(ast[i].value != null)
+                if(returnStack.length > 0)
                 {
-                    var res = executeExpression(ast[i].value);
-                    return res;
+                    if(ast[i].value != null)
+                    {
+                        var res = executeExpression(ast[i].value);
+                        return res;
+                    }
+                    else return null;
                 }
-                else return null;
+                else
+                {
+                    semanticErrors.push(new Error('Sentencia return en un entorno no válido', 0, 0));
+                }
                 /*let returnValue = ast[i].value ? executeExpression(ast[i].value) : null;
                 let functionType = returnStack[returnStack.length-1];
                 let expectedType = null;
@@ -654,7 +663,6 @@ function executeExpression(stm)
 
 function executeFunction(stm)
 {
-    console.log('Translating function');
 }
 
 function executeDeclaration(stm)
@@ -726,7 +734,8 @@ function executeIf(stm)
 {
     let cond = stm.condition.expression;
     let stms = stm.statements;
-    if(executeExpression(cond)) execute(stms);
+    if(executeExpression(cond)) return execute(stms);
+    else return null;
 }
 
 function executeIfelse(stm)
@@ -734,8 +743,8 @@ function executeIfelse(stm)
     let cond = stm.condition.expression;
     let stmsTrue = stm.statementsTrue;
     let stmsFalse = stm.statementsFalse;
-    if(executeExpression(cond)) execute(stmsTrue);
-    else execute(stmsFalse);
+    if(executeExpression(cond)) return execute(stmsTrue);
+    else return execute(stmsFalse);
 }
 
 function executeWhile(stm)
