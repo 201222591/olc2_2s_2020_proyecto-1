@@ -695,10 +695,10 @@ function executeDeclaration(stm)
             }
             if(dec.array != null)
             {
-
+                len = dec.type;
             }
             //verify if types match
-            if(typeof val == varType || val == null)
+            if(typeof val == varType || val == null || (Array.isArray(val) && val.length == 0))
             {
                 let d = new Symbol('Declaration', varType, dec.id, val, dec.array, stm.scope);
                 //decide where to store the variable
