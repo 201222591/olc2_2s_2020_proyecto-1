@@ -676,7 +676,7 @@ function executeDeclaration(stm)
         {
             let val = null;
             let varType = null;
-            let len = null;
+            let elementsMatchType = false;
             if(dec.value != null) val = executeExpression(dec.value);
             if(dec.type == null)
             {
@@ -695,10 +695,13 @@ function executeDeclaration(stm)
             }
             if(dec.array != null)
             {
-                len = dec.type;
+                val.forEach(element => {
+                    if(typeof element == varType) elementsMatchType = true
+                });
             }
+            else {}
             //verify if types match
-            if(typeof val == varType || val == null || (Array.isArray(val) && val.length == 0))
+            if(typeof val == varType || val == null || (Array.isArray(val) && val.length == 0) || elementsMatchType)
             {
                 let d = new Symbol('Declaration', varType, dec.id, val, dec.array, stm.scope);
                 //decide where to store the variable
