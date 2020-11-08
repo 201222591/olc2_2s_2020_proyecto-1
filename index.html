@@ -1,0 +1,139 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <table cellpadding="50px">
+            <tr valign="top" align="center">
+                <td>
+                    <div id="ide">
+                        <textarea id="mainText" name="mainText" rows="30" cols="100"></textarea> <br/><br/>
+                        <input type="file" name="inputfile" id="inputfile"> 
+                        <input type="button" value="Traducir" onclick="testOptimize()"/>
+                        <input type="button" value="Analizar" onclick="analize()";/> 
+                        <input type="button" value="test" onclick="test()";/> 
+                        <a href='C:/Users/kairi/Desktop/p2temp/reports.html' value="Reportes"> Reportes </a> <br/><br>
+                        <textarea readonly id="console" name="console" rows="15" cols="100" class="console">>></textarea><br/><br/>
+                    </div>
+                </td>
+                <td >
+                    <div>
+                        <table class="report-table" id="lexicalErrors"></table> <br/>
+                        <table class="report-table" id="syntaxErrors"></table> <br/>
+                        <table class="report-table" id="semanticErrors"></table> <br/>
+                        <table class="report-table" id="symbolTable"></table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
+    </body>
+
+    <script src="grammar.js"></script>
+    <script src="translator.js"></script>
+    <script src="optimizer.js"></script>
+    <script src="nativeFunctions.js"></script>
+    
+
+    <script type="text/javascript">
+        function analize()
+        {
+            var toParse = document.getElementById("mainText").value;
+            var result = grammar.parse(toParse);
+            loadErrors();
+            if(result != null)
+            {
+                console.log(result[0]);
+                clearResultCode();
+                saveGlobal(result[0]);
+                translate(result[0]);
+
+                addTmpToHeader();
+                let finalCode = header + mainFunction1 +resultCode + mainFunction2;
+                
+                //console.log(optimizeRule1(codeToArray(finalCode)));
+
+                document.getElementById('console').innerHTML = finalCode;
+
+                /*console.log(tsStack);
+                console.log(pStack);
+                console.log(p);*/
+                //console.log(lexicalErrors);
+                //console.log(syntaxErrors);
+                
+                loadSymbolTable();
+            }
+            else
+            {
+                console.log('ERROR');
+            }
+        }
+
+        function loadErrors()
+        {
+            let lexErrors = '<tr><td class="table-header" align="center" colspan="3">Errores lexicos</td></tr>\n';
+            lexErrors += '<tr><td class="table-header">Mensaje</td><td class="table-header">Fila</td><td class="table-header">Columna</td></tr>\n';
+            lexicalErrors.forEach(e => {
+                lexErrors += '<tr><td class="table-header">'+e.message+'</td><td class="table-header">'+e.row+'</td><td class="table-header">'+e.column+'</td></tr>\n';
+            });
+            document.getElementById("lexicalErrors").innerHTML = lexErrors;
+
+            let synErrors = '<tr><td align="center" colspan="3">Errores sintacticos</td></tr>\n';
+            synErrors += '<tr><td class="table-header">Mensaje</td><td class="table-header">Fila</td><td class="table-header">Columna</td></tr>\n';
+            syntaxErrors.forEach(e => {
+                synErrors += '<tr><td class="table-header">'+e.message+'</td><td class="table-header">'+e.row+'</td><td class="table-header">'+e.column+'</td></tr>\n';
+            });
+            document.getElementById("syntaxErrors").innerHTML = synErrors;
+
+            let semErrors = '<tr><td align="center" colspan="3">Errores semanticos</td></tr>\n';
+            semErrors += '<tr><td class="table-header">Mensaje</td><td class="table-header">Fila</td><td class="table-header">Columna</td></tr>\n';
+                semanticErrors.forEach(e => {
+                semErrors += '<tr><td class="table-header">'+e.message+'</td><td class="table-header">'+e.row+'</td><td class="table-header">'+e.column+'</td></tr>\n';
+            });
+            document.getElementById("semanticErrors").innerHTML = semErrors;
+        }
+
+        function loadSymbolTable()
+        {
+            let syms = '<tr><td class="table-header">Tipo</td><td class="table-header">Identificador</td><td class="table-header">Tipo de dato</td><td class="table-header">Ambito</td></tr>\n';
+                finalSymbolTable.forEach(e => {
+                    syms += '<tr><td class="table-header">'+e.type+'</td><td class="table-header">'+e.id+'</td><td class="table-header">'+e.returnType+'</td><td class="table-header">'+e.scope2+'</td></tr>\n';
+            });
+            document.getElementById("symbolTable").innerHTML = syms;
+            console.log(pStack);
+            console.log(p);
+        }
+
+        function testOptimize()
+        {
+            //let testString = 'T=0;\nT=9;\ngoto L1;\n<instrucciones>1;\nL8:\n<instrucciones>2;\nL1:\nT51 = t1 + t50;';
+            let nonOptimizedCode = document.getElementById("console").value;
+            let optimizedCode = optimize(codeToArray(nonOptimizedCode));
+
+            let s = '';
+            optimizedCode.forEach(line => {
+                s += line + '\n';
+            });
+            document.getElementById('console').innerHTML = s;
+
+            console.log(optimizationLog);
+        }
+
+        function test()
+        {
+            let test3dCode = document.getElementById("mainText").value;
+            let optimizedCode = optimize(codeToArray(test3dCode));
+            //let optimizedCode = optimizeRule4(codeToArray(test3dCode));
+            console.log(optimizationLog);
+
+            let s = '';
+            optimizedCode.forEach(line => {
+            //optimizedCode.code.forEach(line => {
+                s += line + '\n';
+            });
+            document.getElementById('console').innerHTML = s;
+
+        }
+    </script>
+
+</html>

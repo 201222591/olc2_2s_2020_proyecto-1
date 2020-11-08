@@ -1,0 +1,12 @@
+.table-header{
+    padding-left:20;
+    padding-right:20;
+    border: 1px solid black;
+    border-collapse: collapse;
+  
+}
+
+.report-table{
+    border: 1px solid black;
+    border-collapse: collapse;
+}
