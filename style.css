@@ -1,0 +1,28 @@
+.table-header{
+    padding-left:20;
+    padding-right:20;
+    border: 1px solid black;
+    border-collapse: collapse;
+  
+}
+
+.report-table{
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+.body-background{
+    background-color: darkgrey;
+}
+
+.text-background{
+    background-color: darkgrey;
+    width: 1000;
+}
+
+.console-background{
+    background-color: black;
+    color: white;
+    width: 1000;
+    height: 300;
+}

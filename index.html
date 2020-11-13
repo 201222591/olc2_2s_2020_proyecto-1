@@ -1,49 +1,160 @@
 <html>
     <head>
-        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="style.css">
     </head>
-    <body>
-        <div id="textArea">
-            <textarea id="mainText" name="mainText" rows="30" cols="100"></textarea> <br/><br/>
-            <input type="file" name="inputfile" id="inputfile"> 
-            <input type="button" value="Traducir" onclick=""/>
-            <input type="button" value="Analizar" onclick="analize();"/>
-        </div>
-        <p id="result">
-            Resultado 
-        </p>
-        <textarea readonly id="console" name="console" rows="15" cols="100" class="console">>></textarea><br/><br/>
+    <body class="body-background">
+        <table cellpadding="50px">
+            <tr valign="top" align="center">
+                <td>
+                    <div id="ide">
+                        <textarea class="text-background" id="mainText" name="mainText" rows="30" cols="100"></textarea> <br/><br/>
+                        <input type="file" name="inputfile" id="inputfile"> 
+                        <input type="button" value="Optimizar" onclick="testOptimize()"/>
+                        <input type="button" value="Analizar" onclick="analize()";/> 
+                        <input type="button" value="test" onclick="test()";/> 
+                        <a id="astLink" href="#">AST</a>
+                        <a href='C:/Users/kairi/Desktop/p2temp/reports.html' value="Reportes"> Reportes </a> <br/><br>
+                        
+                        <textarea readonly class="console-background" id="console" name="console" rows="15" cols="100" class="console">>></textarea><br/><br/>
+                    </div>
+                </td>
+                <td >
+                    <div>
+                        <table class="report-table" id="lexicalErrors"></table> <br/>
+                        <table class="report-table" id="syntaxErrors"></table> <br/>
+                        <table class="report-table" id="semanticErrors"></table> <br/>
+                        <table class="report-table" id="symbolTable"></table> <br/>
+                        <table class="report-table" id="optimizationTable"></table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
     </body>
 
-    <script src="calc.js"></script>
-    <script src="translator.js"></script>
-    <script src="executor.js"></script>
+    <script src="grammar.js"></script>
+    <script src="ast.js"></script>
 
-    <script type="text/javascript"> 
-        document.getElementById('inputfile') 
-            .addEventListener('change', function() { 
-                var fr=new FileReader(); 
-                fr.onload=function(){ 
-                    document.getElementById('mainText') 
-                            .textContent=fr.result; 
-                }     
-                fr.readAsText(this.files[0]); 
-        }) 
-    </script> 
+    <script src="translator.js"></script>
+    <script src="optimizer.js"></script>
+
+    <script src="nativeFunctions.js"></script>
+    
+
+    
 
     <script type="text/javascript">
         function analize()
         {
             var toParse = document.getElementById("mainText").value;
-            var result = calc.parse(toParse);
-            saveGlobal(result[0]);
-            execute(result[0]);
-            //console.log(result[0]);
-            document.getElementById('console').innerHTML = consoleOutput;
-            console.log(globalStack.stack);
-            //console.log(semanticErrors);
-            //document.getElementById("result").innerHTML = result;
+            var result = grammar.parse(toParse);
+            loadErrors();
+            if(result != null)
+            {
+                console.log(result[0]);
+                clearResultCode();
+                saveGlobal(result[0]);
+                translate(result[0]);
+
+                addTmpToHeader();
+                let finalCode = header + mainFunction1 +resultCode + mainFunction2;
+                
+                //console.log(optimizeRule1(codeToArray(finalCode)));
+
+                document.getElementById('console').innerHTML = finalCode;
+                
+                loadSymbolTable();
+
+                ast.parse(toParse);
+
+                astAddress += dotData;
+                astAddress += '}';
+                document.getElementById("astLink").setAttribute("href",astAddress);
+                //console.log(astAddress);
+                console.log(tsStack);
+            }
+            else
+            {
+                console.log('ERROR');
+            }
+        }
+
+        function loadErrors()
+        {
+
+            
+            let lexErrors = '<tr><td class="table-header" align="center" colspan="3">Errores lexicos</td></tr>\n';
+            lexErrors += '<tr><td class="table-header">Mensaje</td><td class="table-header">Fila</td><td class="table-header">Columna</td></tr>\n';
+            lexicalErrors.forEach(e => {
+                lexErrors += '<tr><td class="table-header">'+e.message+'</td><td class="table-header">'+e.row+'</td><td class="table-header">'+e.column+'</td></tr>\n';
+            });
+            document.getElementById("lexicalErrors").innerHTML = lexErrors;
+
+            let synErrors = '<tr><td align="center" colspan="3">Errores sintacticos</td></tr>\n';
+            synErrors += '<tr><td class="table-header">Mensaje</td><td class="table-header">Fila</td><td class="table-header">Columna</td></tr>\n';
+            syntaxErrors.forEach(e => {
+                synErrors += '<tr><td class="table-header">'+e.message+'</td><td class="table-header">'+e.row+'</td><td class="table-header">'+e.column+'</td></tr>\n';
+            });
+            document.getElementById("syntaxErrors").innerHTML = synErrors;
+
+            let semErrors = '<tr><td align="center" colspan="3">Errores semanticos</td></tr>\n';
+            semErrors += '<tr><td class="table-header">Mensaje</td><td class="table-header">Fila</td><td class="table-header">Columna</td></tr>\n';
+                semanticErrors.forEach(e => {
+                semErrors += '<tr><td class="table-header">'+e.message+'</td><td class="table-header">'+e.row+'</td><td class="table-header">'+e.column+'</td></tr>\n';
+            });
+            document.getElementById("semanticErrors").innerHTML = semErrors;
+        }
+
+        function loadSymbolTable()
+        {
+            let syms = '<tr><td class="table-header">Tipo</td><td class="table-header">Identificador</td><td class="table-header">Tipo de dato</td><td class="table-header">Dimensiones</td><td class="table-header">Ambito</td></tr>\n';
+                finalSymbolTable.forEach(e => {
+                    syms += '<tr><td class="table-header">'+e.type+'</td><td class="table-header">'+e.id+'</td><td class="table-header">'+e.returnType+'</td><td class="table-header">'+e.nDim+'</td><td class="table-header">'+e.scope2+'</td></tr>\n';
+            });
+            document.getElementById("symbolTable").innerHTML = syms;
+            
+        }
+
+        function loadOptimizationReport()
+        {
+            let r = '<tr><td class="table-header">Regla</td><td class="table-header">Codigo Agregado</td><td class="table-header">Codigo eliminado</td></tr>\n';
+                optimizationLog.forEach(e => {
+                    r += '<tr><td class="table-header">'+e+'</td><td class="table-header">'+e[1]+'</td><td class="table-header">'+e[2]+'</td></tr>\n';
+            });
+            document.getElementById("optimizationTable").innerHTML = r;
+        }
+
+        function testOptimize()
+        {
+            //let testString = 'T=0;\nT=9;\ngoto L1;\n<instrucciones>1;\nL8:\n<instrucciones>2;\nL1:\nT51 = t1 + t50;';
+            let nonOptimizedCode = document.getElementById("console").value;
+            let optimizedCode = optimize(codeToArray(nonOptimizedCode));
+
+            let s = '';
+            optimizedCode.forEach(line => {
+                s += line + '\n';
+            });
+            document.getElementById('console').innerHTML = s;
+
+            console.log(optimizationLog);
+            loadOptimizationReport();
+        }
+
+        function test()
+        {
+            let test3dCode = document.getElementById("mainText").value;
+            let optimizedCode = optimize(codeToArray(test3dCode));
+            //let optimizedCode = optimizeRule4(codeToArray(test3dCode));
+            console.log(optimizationLog);
+
+            let s = '';
+            optimizedCode.forEach(line => {
+            //optimizedCode.code.forEach(line => {
+                s += line + '\n';
+            });
+            document.getElementById('console').innerHTML = s;
+
         }
     </script>
-    
+
 </html>
