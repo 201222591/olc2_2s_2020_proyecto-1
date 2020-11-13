@@ -98,7 +98,7 @@
 
 [0-9]+("."[0-9]+)?\b    				return 'DECIMAL';
 [0-9]+\b                				return 'INTEGER';
-((\").*?(\"))|((\').*?(\'))				return 'STRING';
+((\").*?(\"))|((\').*?(\'))				return 'STRINGVAL';
 [a-zA-Z_][a-aA-Z_0-9]*					return	'NAME';
 
 
@@ -309,7 +309,7 @@
 	{
 		this.model = 'Expression';
 		this.expression = exp;
-	}
+	};
 
 	var Variable = function(id)
 	{
@@ -372,7 +372,7 @@
 		this.model = 'StringLength',
 		this.value = str;
 		this.type = type;
-	}
+	};
 
 	var StringCharAt = function(str, type, index)
 	{
@@ -380,21 +380,21 @@
 		this.value = str;
 		this.type = type;
 		this.index = index;
-	}
+	};
 
 	var StringToLower = function(str, type)
 	{
 		this.model = 'StringToLower',
 		this.value = str;
 		this.type = type;
-	}
+	};
 
 	var StringToUpper = function(str, type)
 	{
 		this.model = 'StringToUpper',
 		this.value = str;
 		this.type = type;
-	}
+	};
 
 	var StringConcat = function(str1, str2, type)
 	{
@@ -402,7 +402,7 @@
 		this.value1 = str1;
 		this.value2 = str2;
 		this.type = type;
-	}
+	};
 
 	var AccessList = function(arr)
 	{
@@ -413,8 +413,17 @@
 	var ObjectDeclaration = function(id, atr)
 	{
 		this.model = 'ObjectDeclaration';
+		this.id = id;
 		this.attributes = atr;
-	}
+	};
+
+	var Objectt = function(id, typ, atr)
+	{
+		this.model = 'Object';
+		this.id = id;
+		this.type = typ;
+		this.attributes = atr;
+	};
 
 	// FUNCTIONS
 
@@ -666,6 +675,12 @@
 		let o = new ObjectDeclaration(id, atrs);
 		return o;
 	}
+
+	function create_object(id, tp, atrs)
+	{
+		let o = new Objectt(id, tp, atrs);
+		return o;
+	}
 %}
 
 
@@ -864,17 +879,21 @@ stm
 	{
 		$$ = create_for($3, $5, $7, $9);
 	}
-	| FOR L_PAR scope NAME OF NAME R_PAR stm
+	| FOR L_PAR scope NAME OF expr R_PAR stm
 	{
-		$$ =  create_forof($4.toLowerCase(), $6.toLowerCase(), $8);
+		$$ =  create_forof($4.toLowerCase(), $6, $8);
 	}
-	| FOR L_PAR scope NAME IN NAME R_PAR stm
+	| FOR L_PAR scope NAME IN expr R_PAR stm
 	{
-		$$ =  create_forin($4.toLowerCase(), $6.toLowerCase(), $8);
+		$$ =  create_forin($4.toLowerCase(), $6, $8);
 	}
-	| object_decl
+	| object 
 	{
-
+		$$ = $1;
+	}
+	| object_decl 
+	{
+		$$ = $1;
 	}
 	| normal_stm
 	{
@@ -899,13 +918,13 @@ then_stm
 	{
 		$$ = create_for($3, $5, $7, $9);
 	}
-	| FOR L_PAR scope NAME OF NAME R_PAR then_stm
+	| FOR L_PAR scope NAME OF expr R_PAR then_stm
 	{
-		$$ =  create_forof($4.toLowerCase(), $6.toLowerCase(), $8);
+		$$ =  create_forof($4.toLowerCase(), $6, $8);
 	}
-	| FOR L_PAR scope NAME IN NAME R_PAR then_stm
+	| FOR L_PAR scope NAME IN expr R_PAR then_stm
 	{
-		$$ =  create_forin($4.toLowerCase(), $6.toLowerCase(), $8);
+		$$ =  create_forin($4.toLowerCase(), $6, $8);
 	}
 	| normal_stm
 	{
@@ -960,10 +979,6 @@ normal_stm
 	{
 		$$ = create_consolelog($3);
 	}
-	| GRAFICAR_TS L_PAR R_PAR SEMICOLON
-	{
-		$$ = create_graficarTS();
-	}
 ;
 
 object_decl
@@ -981,6 +996,7 @@ atr_list
 		{
 			if(Array.isArray($3))
 			{
+				atrlist1.push($1);
 				$3.forEach(e =>{
 					atrlist1.push(e);
 				});
@@ -1007,13 +1023,40 @@ atr_list
 ;
 
 atr
-	: NAME COLON value
+	: NAME COLON NAME // id : variable
 	{
 		let atr1 = {
 			id: $1.toLowerCase(),
-			value: $3
+			value: create_variable($3.toLowerCase())
 		};
 		$$ = atr1;
+	}
+	| NAME COLON type
+	{
+		let atr2 = {
+			id: $1.toLowerCase(),
+			value: $3.toLowerCase()
+		};
+		$$ = atr2;
+	}
+	| NAME COLON value
+	{
+		let atr3 = {
+			id: $1.toLowerCase(),
+			value: $3
+		};
+		$$ = atr3;
+	}
+;
+
+object
+	: scope NAME COLON NAME ASSIGN L_CURLY atr_list R_CURLY SEMICOLON
+	{
+		$$ = create_object($2.toLowerCase(), $4.toLowerCase(), $7);
+	}
+	| scope NAME ASSIGN L_CURLY atr_list R_CURLY SEMICOLON
+	{
+		$$ = create_object($2.toLowerCase(), 'null', $5);
 	}
 ;
 
@@ -1085,7 +1128,7 @@ dec_type
 	}
 ;
 
-array
+array // for declaration
 	: L_SQUARE expr R_SQUARE
 	{
 		$$ = $2;
@@ -1093,6 +1136,19 @@ array
 	| L_SQUARE 		R_SQUARE
 	{
 		$$ = '[]';
+	}
+	| array L_SQUARE R_SQUARE
+	{
+		if($1 == null)
+		{
+			$$ = '[]';
+		}
+		else 
+		{
+			let sbList = $1;
+			sbList += '[]';
+			$$ = sbList;
+		}
 	}
 	|
 	{
@@ -1455,7 +1511,7 @@ value
 	{
 		$$ = create_number($1);
 	}
-	| STRING DOT string_function
+	| STRINGVAL DOT string_function
 	{
 		let s3 = $1.replace(/\"/g, "");
 		let s4 = s3.replace(/\'/g, "");
@@ -1481,10 +1537,12 @@ value
 			$$ = create_stringconcat(s4, $3.value, 'String');
 		}
 	}
-	| STRING
+	| STRINGVAL
 	{
-		let s = $1.replace(/\"/g, "");
+		/*let s = $1.replace(/\"/g, "");
 		let s2 = s.replace(/\'/g, "");
+		$$ = create_string(s2);*/
+		let s2 = $1.slice(1, -1);
 		$$ = create_string(s2);
 	}
 	| NAME DOT string_function
@@ -1537,12 +1595,12 @@ value
 	| L_SQUARE expr R_SQUARE
 	{
 		//array assignment [elements]
-		$$ = create_arrayassignment($2);
+		$$ = create_arrayassignment($2); //left side array
 	}
 	| L_SQUARE		R_SQUARE
 	{
 		//array assignment []
-		$$ = create_arrayassignment(null);
+		$$ = create_arrayassignment(null); //left side array
 	}
 	| L_PAR expr R_PAR
 	{
@@ -1556,6 +1614,14 @@ value
 			name_accesslist.push(e);
 		});
 		$$ = create_accesslist(name_accesslist);
+	}
+	| NEW ARRAY L_PAR expr R_PAR
+	{
+		let newArray = {
+			model : 'NewArray',
+			expression : $4
+		};
+		$$ = newArray;
 	}
 ;
 

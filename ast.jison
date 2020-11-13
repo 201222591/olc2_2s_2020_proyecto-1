@@ -63,7 +63,7 @@
 "in"                return 'IN';
 "of"                return 'OF';
 "console.log"		return 'CONSOLE_LOG';
-"graficar_ts"		return 'GRAFICAR_TS';
+//"graficar_ts"		return 'GRAFICAR_TS';
 
 
 "?"                 return 'QUESTION';
@@ -75,13 +75,12 @@
 "string"            return 'STRING';
 "boolean"           return 'BOOLEAN';
 "void"              return 'VOID';
-"types"             return 'TYPES';
-"push"              return 'PUSH';
-"pop"               return 'POP';
+//"push"              return 'PUSH';
+//"pop"               return 'POP';
 "length"            return 'LENGTH';
 "let"               return 'LET';
 "const"             return 'CONST';
-"var"               return 'VAR';
+//"var"               return 'VAR';
 "function"          return 'FUNCTION';
 
 "charat"			return 'CHARAT';
@@ -105,8 +104,7 @@
 
 <<EOF>>                 return 'EOF';
 .                       {
-							lexicalErrors.push(new Error('Error léxico en el token '+ yytext+'.', yylloc.first_line, yylloc.first_column));
-							console.error('Error léxico: ' + yytext + ', en la linea: ' + yylloc.first_line + ', en la columna: ' + yylloc.first_column);
+							lexicalErrors.push(new Error('Error lexico en el token: '+ yytext+'.', yylloc.first_line, yylloc.first_column));
 						}
 /lex
 
@@ -118,9 +116,6 @@
 
 
 %{
-	var lexicalErrors = [];
-	var syntaxErrors = [];
-	var semanticErrors = [];
 	//MODELS
 	var Function = function(returnType, id, parameters, statements)
 	{
@@ -372,36 +367,41 @@
 		this.value = expr;
 	};
 
-	var StringLength = function(str)
+	var StringLength = function(str, type)
 	{
 		this.model = 'StringLength',
 		this.value = str;
+		this.type = type;
 	}
 
-	var StringCharAt = function(str, index)
+	var StringCharAt = function(str, type, index)
 	{
 		this.model = 'StringCharAt',
 		this.value = str;
+		this.type = type;
 		this.index = index;
 	}
 
-	var StringToLower = function(str)
+	var StringToLower = function(str, type)
 	{
 		this.model = 'StringToLower',
 		this.value = str;
+		this.type = type;
 	}
 
-	var StringToUpper = function(str)
+	var StringToUpper = function(str, type)
 	{
 		this.model = 'StringToUpper',
 		this.value = str;
+		this.type = type;
 	}
 
-	var StringConcat = function(str1, str2)
+	var StringConcat = function(str1, str2, type)
 	{
 		this.model = 'StringConcat',
 		this.value1 = str1;
 		this.value2 = str2;
+		this.type = type;
 	}
 
 	var AccessList = function(arr)
@@ -625,33 +625,33 @@
 		return b;
 	}
 
-	function create_stringlength(str)
+	function create_stringlength(str, type)
 	{
-		let s = new StringLength(str);
+		let s = new StringLength(str, type);
 		return s;
 	}
 
-	function create_stringcharat(str, index)
+	function create_stringcharat(str, type, index)
 	{
-		let s = new StringCharAt(str, index);
+		let s = new StringCharAt(str, type, index);
 		return s;
 	}
 
-	function create_stringtolower(str)
+	function create_stringtolower(str, type)
 	{
-		let s = new StringToLower(str);
+		let s = new StringToLower(str, type);
 		return s;
 	}
 
-	function create_stringtoupper(str)
+	function create_stringtoupper(str, type)
 	{
-		let s = new StringToUpper(str);
+		let s = new StringToUpper(str, type);
 		return s;
 	}
 
-	function create_stringconcat(str1, str2)
+	function create_stringconcat(str1, str2, type)
 	{
-		let s = new StringConcat(str1, str2);
+		let s = new StringConcat(str1, str2, type);
 		return s;
 	}
 
@@ -683,40 +683,28 @@ S
 decls
 	: decl decls
 	{
-		let decls1 = [$1];
-		if($2 != null)
-		{
-			if(Array.isArray($2))
-			{
-				$2.forEach(element => decls1.push(element));
-			}
-			else
-			{
-				decls1.push($2);
-			}
-			
-		}
-		$$ = decls1;
+		$$ = nodeCounter;
+
+
+		dotData += nodeCounter+'[label=\"decls\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$2+';';
+
+		nodeCounter += 1;
+
 	}
 	|
 	{
-		$$ = null;
+		$$ = nodeCounter;
+		let dcs1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"decls\"];';
+		dotData += dcs1+'[label=\"null\"];';
+		dotData += nodeCounter+'->'+dcs1+';';
+
+		nodeCounter += 2;
 	}
-	/*| error SEMICOLON
-	{
-		//syntaxErrors.push(new Error('Token no esperado: ' + yytext + '.', this._$.first_line, this._$.first_column));
-		console.log('Token no esperado: ' + yytext + '. Recuperando con ;', this._$.first_line, this._$.first_column);
-	}
-	| error L_CURLY
-	{
-		//syntaxErrors.push(new Error('Token no esperado: ' + yytext + '.', this._$.first_line, this._$.first_column));
-		console.log('Token no esperado: ' + yytext + '. Recuperando con }', this._$.first_line, this._$.first_column);
-	}
-	| error
-	{
-		//syntaxErrors.push(new Error('Token no esperado: ' + yytext + '.', this._$.first_line, this._$.first_column));
-		console.log('Token no esperado: ' + yytext + '.', this._$.first_line, this._$.first_column);
-	}*/
 ;
 
 decl
@@ -726,70 +714,130 @@ decl
 	}
 	| stm_list
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"decl\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 func_decl
 	: FUNCTION NAME L_PAR params R_PAR return_type block_decl
 	{
-		$$ =  create_function($6, $2, $4, $7);
+		$$ = nodeCounter;
+		let fd1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"func_decl\"];';
+		dotData += fd1+'[label=\"'+$2+'\"];';
+		dotData += nodeCounter+'->'+fd1+';';
+		dotData += nodeCounter+'->'+$4+';';
+		dotData += nodeCounter+'->'+$6+';';
+		dotData += nodeCounter+'->'+$7+';';
+
+		nodeCounter += 2;
 	}
 	| FUNCTION NAME L_PAR params R_PAR             block_decl
 	{
-		$$ = create_function(null, $2, $4, $6);
+		$$ = nodeCounter;
+		let fd2 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"func_decl\"];';
+		dotData += fd2+'[label=\"'+$2+'\"];';
+		dotData += nodeCounter+'->'+fd2+';';
+		dotData += nodeCounter+'->'+$4+';';
+		dotData += nodeCounter+'->'+$6+';';
+
+		nodeCounter += 2;
 	}
 	| FUNCTION NAME L_PAR        R_PAR return_type block_decl
 	{
-		$$ = create_function($5, $2, null, $6);
+		$$ = nodeCounter;
+		let fd3 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"func_decl\"];';
+		dotData += fd3+'[label=\"'+$2+'\"];';
+		dotData += nodeCounter+'->'+fd3+';';
+		dotData += nodeCounter+'->'+$5+';';
+		dotData += nodeCounter+'->'+$6+';';
+
+		nodeCounter += 2;
 	}
 	| FUNCTION NAME L_PAR        R_PAR             block_decl
 	{
-		$$ = create_function(null, $2, null, $5);
+		$$ = nodeCounter;
+		let fd4 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"func_decl\"];';
+		dotData += fd4+'[label=\"'+$2+'\"];';
+		dotData += nodeCounter+'->'+fd4+';';
+		dotData += nodeCounter+'->'+$5+';';
+		
+		nodeCounter += 2;
 	}
 ;
 
 params
 	: param COMMA params
 	{
-		let paramsList = [$1];
-		if($3 != null)
-		{
-			$3.forEach(element => paramsList.push(element));
-		}
-		$$ = paramsList;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"params\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+		
+		nodeCounter += 1;
 	}
 	| param
 	{
-		$$ = [$1];
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"params\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		
+		nodeCounter += 1;
 	}	
 ;
 
 param
 	: NAME return_type
 	{
-		let param1 = {
-			model: 'Parameter',
-			id: $1,
-			type: $2
-		};
-		$$ = param1;
+		$$ = nodeCounter;
+		let prm1 = nodeCounter + 1
+
+		dotData += nodeCounter+'[label=\"params\"];';
+		dotData += prm1+'[label=\"'+$1+'\"];';
+		dotData += nodeCounter+'->'+prm1+';';
+		dotData += nodeCounter+'->'+$2+';';
+		
+		nodeCounter += 2;
 	}
 	| NAME
 	{
-		let param2 = {
-			model: 'Parameter',
-			id: $1,
-			type: null
-		}; 
-		$$ = param2;
+		$$ = nodeCounter;
+		let prm2 = nodeCounter + 1
+
+		dotData += nodeCounter+'[label=\"params\"];';
+		dotData += prm2+'[label=\"'+$1+'\"];';
+		dotData += nodeCounter+'->'+prm2+';';
+		
+		nodeCounter += 2;
 	}
 ;
 
 return_type
 	: COLON type
 	{
-		$$ = $2;
+		$$ = nodeCounter;
+		let rt1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"return_type\"];';
+		dotData += rt1+'[label=\"'+$2+'\"];';
+		dotData += nodeCounter+'->'+rt1+';';
+
+		nodeCounter += 2;
 	}
 ;
 
@@ -815,134 +863,375 @@ type
 block_decl
 	: L_CURLY stm_list R_CURLY
 	{
-		$$ = $2;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"block_decl\"];';
+
+		dotData += nodeCounter+'->'+$2+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 stm_list
 	: stm stm_list
 	{
-		let stmList = [$1];
-		if($2 != null)
-		{
-			$2.forEach(element => stmList.push(element));
-		}
-		$$ = stmList;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm_list\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$2+';';
+		
+		nodeCounter += 1;
 	}
 	|
 	{
-		$$ = null;
+		$$ = nodeCounter;
+		let stms1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"stm_list\"];';
+		dotData += stms1+'[label=\"null\"];';
+		dotData += nodeCounter+'->'+stms1+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 stm
 	: func_decl
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| var_decl SEMICOLON
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| IF L_PAR expr	R_PAR stm ELSE stm
 	{
-		$$ = create_ifelse($3, $5, $7);
+		$$ = nodeCounter;
+		let stm1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+		dotData += stm1+'[label=\"IF ELSE\"];';
+		dotData += nodeCounter+'->'+stm1+';';
+		dotData += nodeCounter+'->'+$3+';';
+		dotData += nodeCounter+'->'+$5+';';
+		dotData += nodeCounter+'->'+$7+';';
+
+		nodeCounter += 2;
 	}
 	| IF L_PAR expr R_PAR stm
 	{
-		$$ =  create_if($3, $5);
+		$$ = nodeCounter;
+		let stm2 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+		dotData += stm2+'[label=\"IF\"];';
+		dotData += nodeCounter+'->'+stm2+';';
+		dotData += nodeCounter+'->'+$3+';';
+		dotData += nodeCounter+'->'+$5+';';
+
+		nodeCounter += 2;
 	}
 	| WHILE L_PAR expr R_PAR stm
 	{
-		$$ = create_while($3, $5);
+		$$ = nodeCounter;
+		let stm3 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+		dotData += stm3+'[label=\"WHILE\"];';
+		dotData += nodeCounter+'->'+stm3+';';
+		dotData += nodeCounter+'->'+$3+';';
+		dotData += nodeCounter+'->'+$5+';';
+
+		nodeCounter += 2;
 	}
 	| FOR L_PAR arg SEMICOLON arg SEMICOLON arg R_PAR stm
 	{
-		$$ = create_for($3, $5, $7, $9);
+		$$ = nodeCounter;
+		let stm4 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+		dotData += stm4+'[label=\"FOR\"];';
+		dotData += nodeCounter+'->'+stm4+';';
+		dotData += nodeCounter+'->'+$3+';';
+		dotData += nodeCounter+'->'+$5+';';
+		dotData += nodeCounter+'->'+$7+';';
+		dotData += nodeCounter+'->'+$9+';';
+
+		nodeCounter += 2;
 	}
-	| FOR L_PAR scope NAME OF NAME R_PAR stm
+	| FOR L_PAR scope NAME OF expr R_PAR stm
 	{
-		$$ =  create_forof($4, $6, $8);
+		$$ = nodeCounter;
+		let stm5 = nodeCounter+1;
+		let stm6 = nodeCounter+2;
+		let stm7 = nodeCounter+3;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+		dotData += stm5+'[label=\"FOR OF\"];';
+		dotData += stm6+'[label=\"'+$4+'\"];';
+		dotData += stm7+'[label=\"'+$6+'\"];';
+		dotData += nodeCounter+'->'+stm5+';';
+		dotData += nodeCounter+'->'+stm6+';';
+		dotData += nodeCounter+'->'+stm7+';';
+		dotData += nodeCounter+'->'+$8+';';
+
+		nodeCounter += 4;
 	}
-	| FOR L_PAR scope NAME IN NAME R_PAR stm
+	| FOR L_PAR scope NAME IN expr R_PAR stm
 	{
-		$$ =  create_forin($4, $6, $8);
+		$$ = nodeCounter;
+		let stm8 = nodeCounter+1;
+		let stm9 = nodeCounter+2;
+		let stm10 = nodeCounter+3;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+		dotData += stm8+'[label=\"FOR IN\"];';
+		dotData += stm9+'[label=\"'+$4+'\"];';
+		dotData += stm10+'[label=\"'+$6+'\"];';
+		dotData += nodeCounter+'->'+stm8+';';
+		dotData += nodeCounter+'->'+stm9+';';
+		dotData += nodeCounter+'->'+stm10+';';
+		dotData += nodeCounter+'->'+$8+';';
+
+		nodeCounter += 4;
 	}
-	| object_decl
+	| object 
 	{
 
 	}
+	| object_decl 
+	{
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
+	}
 	| normal_stm
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"stm\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 then_stm
 	: IF L_PAR expr	R_PAR then_stm ELSE then_stm
 	{
-		$$ = create_ifelse($3, $5, $7);
+		$$ = nodeCounter;
+		let tstm1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];';
+		dotData += tstm1+'[label=\"IF ELSE\"];';
+		dotData += nodeCounter+'->'+tstm1+';';
+		dotData += nodeCounter+'->'+$3+';';
+		dotData += nodeCounter+'->'+$5+';';
+		dotData += nodeCounter+'->'+$7+';';
+
+		nodeCounter += 2;
 	}
 	| IF L_PAR expr	R_PAR then_stm
 	{
-		$$ = create_if($3, $5);
+		$$ = nodeCounter;
+		let tstm2 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];';
+		dotData += tstm2+'[label=\"IF\"];';
+		dotData += nodeCounter+'->'+tstm2+';';
+		dotData += nodeCounter+'->'+$3+';';
+		dotData += nodeCounter+'->'+$5+';';
+
+		nodeCounter += 2;
 	}
 	| WHILE L_PAR expr R_PAR then_stm
 	{
-		$$ = create_while($3, $5);
+		$$ = nodeCounter;
+		let tstm3 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];';
+		dotData += tstm3+'[label=\"WHILE\"];';
+		dotData += nodeCounter+'->'+tstm3+';';
+		dotData += nodeCounter+'->'+$3+';';
+		dotData += nodeCounter+'->'+$5+';';
+
+		nodeCounter += 2;
 	}
 	| FOR L_PAR arg SEMICOLON arg SEMICOLON arg R_PAR then_stm
 	{
-		$$ = create_for($3, $5, $7, $9);
+		$$ = nodeCounter;
+		let tstm4 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];';
+		dotData += tstm4+'[label=\"FOR\"];';
+		dotData += nodeCounter+'->'+tstm4+';';
+		dotData += nodeCounter+'->'+$3+';';
+		dotData += nodeCounter+'->'+$5+';';
+		dotData += nodeCounter+'->'+$7+';';
+		dotData += nodeCounter+'->'+$9+';';
+
+		nodeCounter += 2;
 	}
-	| FOR L_PAR scope NAME OF NAME R_PAR then_stm
+	| FOR L_PAR scope NAME OF expr R_PAR then_stm
 	{
-		$$ =  create_forof($4, $6, $8);
+		$$ = nodeCounter;
+		let tstm5 = nodeCounter+1;
+		let tstm6 = nodeCounter+2;
+		let tstm7 = nodeCounter+3;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];';
+		dotData += tstm5+'[label=\"FOR OF\"];';
+		dotData += tstm6+'[label=\"'+$4+'\"];';
+		dotData += tstm7+'[label=\"'+$6+'\"];';
+		dotData += nodeCounter+'->'+tstm5+';';
+		dotData += nodeCounter+'->'+tstm6+';';
+		dotData += nodeCounter+'->'+tstm7+';';
+		dotData += nodeCounter+'->'+$8+';';
+
+		nodeCounter += 4;
 	}
-	| FOR L_PAR scope NAME IN NAME R_PAR then_stm
+	| FOR L_PAR scope NAME IN expr R_PAR then_stm
 	{
-		$$ =  create_forin($4, $6, $8);
+		$$ = nodeCounter;
+		let tstm8 = nodeCounter+1;
+		let tstm9 = nodeCounter+2;
+		let tstm10 = nodeCounter+3;
+
+		dotData += nodeCounter+'[label=\"then_stm\"];';
+		dotData += tstm8+'[label=\"FOR IN\"];';
+		dotData += tstm9+'[label=\"'+$4+'\"];';
+		dotData += tstm10+'[label=\"'+$6+'\"];';
+		dotData += nodeCounter+'->'+tstm8+';';
+		dotData += nodeCounter+'->'+tstm9+';';
+		dotData += nodeCounter+'->'+tstm10+';';
+		dotData += nodeCounter+'->'+$8+';';
+
+		nodeCounter += 4;
 	}
 	| normal_stm
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 normal_stm
 	: DO stm WHILE L_PAR expr R_PAR SEMICOLON
 	{
-		$$ = create_dowhile($5, $2);
+		$$ = nodeCounter;
+		let nstm1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+		dotData += nstm1+'[label=\"DO WHILE\"];';
+		dotData += nodeCounter+'->'+nstm1+';';
+		dotData += nodeCounter+'->'+$2+';';
+		dotData += nodeCounter+'->'+$5+';';
+
+		nodeCounter += 2;
 	}
 	| SWITCH L_PAR expr R_PAR L_CURLY case_stm R_CURLY
 	{
-		$$ = create_switch($3, $6);
+		$$ = nodeCounter;
+		let nstm3 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+		dotData += nstm3+'[label=\"SWITCH\"];';
+		dotData += nodeCounter+'->'+nstm3+';';
+		dotData += nodeCounter+'->'+$3+';';
+		dotData += nodeCounter+'->'+$6+';';
+
+		nodeCounter += 2;
 	}
 	| block_decl
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| expr SEMICOLON
 	{
 		// does nothing
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| BREAK SEMICOLON
 	{
-		$$ = create_break();
+		$$ = nodeCounter;
+		let nstm4 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+		dotData += nstm4+'[label=\"BREAK\"];';
+		dotData += nodeCounter+'->'+nstm4+';';
+
+		nodeCounter += 2;
 	}
 	| CONTINUE SEMICOLON
 	{
-		$$ =  create_continue();
+		$$ = nodeCounter;
+		let nstm5 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+		dotData += nstm5+'[label=\"CONTINUE\"];';
+		dotData += nodeCounter+'->'+nstm5+';';
+
+		nodeCounter += 2;
 	}
 	| RETURN expr SEMICOLON
 	{
-		$$ = create_return($2);
+		$$ = nodeCounter;
+		let nstm6 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+		dotData += nstm6+'[label=\"RETURN\"];';
+		dotData += nodeCounter+'->'+nstm6+';';
+		dotData += nodeCounter+'->'+$2+';';
+
+		nodeCounter += 2;
 	}
 	| RETURN SEMICOLON
 	{
 		// return with no expression(2)
-		$$ = create_return('null');
+		$$ = nodeCounter;
+		let nstm7 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+		dotData += nstm7+'[label=\"RETURN\"];';
+		dotData += nodeCounter+'->'+nstm7+';';
+
+		nodeCounter += 2;
 	}
 	| SEMICOLON
 	{
@@ -950,87 +1239,141 @@ normal_stm
 	}
 	| func_decl
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| CONSOLE_LOG L_PAR expr R_PAR SEMICOLON
 	{
-		$$ = create_consolelog($3);
-	}
-	| GRAFICAR_TS L_PAR R_PAR SEMICOLON
-	{
-		$$ = create_graficarTS();
+		$$ = nodeCounter;
+		let nstm8 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"normal_stm\"];';
+		dotData += nstm8+'[label=\"CONSOLE_LOG\"];';
+		dotData += nodeCounter+'->'+nstm8+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 object_decl
 	: TYPE NAME ASSIGN L_CURLY atr_list R_CURLY SEMICOLON
 	{
-		$$ = create_objectdeclaration($2, $5);
+		$$ = nodeCounter;
+		let od1 = nodeCounter+1;
+		let od2 = nodeCounter+2;
+
+		dotData += nodeCounter+'[label=\"object_decl\"];';
+		dotData += od1+'[label=\"TYPE\"];';
+		dotData += od2+'[label=\"'+$2+'\"];';
+		dotData += nodeCounter+'->'+od1+';';
+		dotData += nodeCounter+'->'+od2+';';
+		dotData += nodeCounter+'->'+$5+';';
+
+		nodeCounter += 3;
 	}
 ;
 
 atr_list
 	: atr COMMA atr_list
 	{
-		let atrlist1 = [];
-		if($3 != null)
-		{
-			if(Array.isArray($3))
-			{
-				$3.forEach(e =>{
-					atrlist1.push(e);
-				});
-				$$ = atrlist1;
-			}
-			else
-			{
-				$$ = [$1, $3];
-			}
-		}
-		else
-		{
-			$$ = $1;
-		}
+		$$ = nodeCounter;
+		dotData += nodeCounter+'[label=\"atr_list\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
 	}
 	| atr
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"atr_list\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| 
 	{
-		$$ = null;
+		$$ = nodeCounter;
+		let atl1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"atr_list\"];';
+		dotData += atl1+'[label=\"null\"];';
+		dotData += nodeCounter+'->'+atl1+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 atr
-	: NAME COLON value
+	: NAME COLON NAME
 	{
-		let atr1 = {
-			id: $1,
-			value: $3
-		};
-		$$ = atr1;
+		$$ = nodeCounter;
+		let atr1 = nodeCounter+1;
+		let atr2 = nodeCounter+2;
+
+		dotData += nodeCounter+'[label=\"atr\"];';
+		dotData += atr1+'[label=\"'+$1+'\"];';
+		dotData += atr2+'[label=\"'+$3+'\"];';
+		dotData += nodeCounter+'->'+atr1+';';
+		dotData += nodeCounter+'->'+atr2+';';
+
+		nodeCounter += 3;
+	}
+	| NAME COLON type
+	{
+		$$ = nodeCounter;
+		let atr03 = nodeCounter+1;
+		let atr4 = nodeCounter+2;
+
+		dotData += nodeCounter+'[label=\"atr\"];';
+		dotData += atr03+'[label=\"'+$1+'\"];';
+		dotData += atr4+'[label=\"'+$3+'\"];';
+		dotData += nodeCounter+'->'+atr03+';';
+		dotData += nodeCounter+'->'+atr4+';';
+
+		nodeCounter += 3;
+	}
+	| NAME COLON value
+	{
+		
+	}
+;
+
+object
+	: scope NAME COLON NAME ASSIGN L_CURLY atr_list R_CURLY SEMICOLON
+	{
+	}
+	| scope NAME ASSIGN L_CURLY atr_list R_CURLY SEMICOLON
+	{
 	}
 ;
 
 var_decl
 	: scope var_element var_list
 	{
-		let varList = [$2];
-		if($3 != null)
-		{
-			$3.forEach(element => varList.push(element));
-		}
-		$$ = create_declaration($1, varList);
+		$$ = nodeCounter;
+		let atr3 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"var_decl\"];';
+		dotData += atr3+'[label=\"'+$1+'\"];';
+		dotData += nodeCounter+'->'+atr3+';';
+		dotData += nodeCounter+'->'+$2+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 scope
-	: VAR
-	{
-		$$ = $1;
-	}
-	| LET
+	: LET
 	{
 		$$ = $1;
 	}
@@ -1043,346 +1386,650 @@ scope
 var_element
 	: NAME dec_type dec_assign
 	{
-		let element = {
-			model: 'VarElement',
-			id: $1,
-			type: $2 == null? null : $2.type,
-			array: $2 == null? null : $2.array,
-			value: $3
-		};
-		$$ = element;
+		$$ = nodeCounter;
+		let ve1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"var_element\"];';
+		dotData += ve1+'[label=\"'+$1+'\"];';
+		dotData += nodeCounter+'->'+ve1+';';
+		dotData += nodeCounter+'->'+$2+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 var_list
 	: COMMA var_element var_list
 	{
-		let a = [$2];
-		if($3 != null)
-		{
-			$3.forEach(element => a.push(element));
-			$$ = a;
-		}
-		else
-		{
-			$$ = a;
-		}
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"var_list\"];';
+		dotData += nodeCounter+'->'+$2+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	|
 	{
-		$$ = null;
+		$$ = nodeCounter;
+		let ve2 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"atr_list\"];';
+		dotData += ve2+'[label=\"null\"];';
+		dotData += nodeCounter+'->'+ve2+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 dec_type
 	: COLON type array
 	{
-		let t = {
-			type: $2,
-			array: $3
-		};
-		$$ = t;
-	}
-	|
-	{
-		$$ = null;
+		$$ = nodeCounter;
+		let dt1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"dec_type\"];';
+		dotData += dt1+'[label=\"'+$2+'\"];';
+		dotData += nodeCounter+'->'+dt1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 array
 	: L_SQUARE expr R_SQUARE
 	{
-		$$ = $2;
+		$$ = nodeCounter;
+		let arr1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"array\"];';
+		dotData += arr1+'[label=\"[]\"];';
+		dotData += nodeCounter+'->'+arr1+';';
+		dotData += nodeCounter+'->'+$2+';';
+
+		nodeCounter += 2;
 	}
 	| L_SQUARE 		R_SQUARE
 	{
-		$$ = '[]';
+		$$ = nodeCounter;
+		let arr2 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"array\"];';
+		dotData += arr2+'[label=\"[]\"];';
+		dotData += nodeCounter+'->'+arr2+';';
+
+		nodeCounter += 2;
+	}
+	| array L_SQUARE R_SQUARE
+	{
 	}
 	|
 	{
-		$$ = null;
+		$$ = nodeCounter;
+		let arr3 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"array\"];';
+		dotData += arr3+'[label=\"null\"];';
+		dotData += nodeCounter+'->'+arr3+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 dec_assign
 	: ASSIGN op_if
 	{
-		$$ = $2;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"dec_assign\"];';
+
+		dotData += nodeCounter+'->'+$2+';';
+
+		nodeCounter += 1;
 	}
 	|
 	{
-		$$ = null;
+		$$ = nodeCounter;
+		let da1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"dec_assign\"];';
+		dotData += da1+'[label=\"null\"];';
+		dotData += nodeCounter+'->'+da1+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 arg
-	: expr
+	: var_decl
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"arg\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
-	| var_decl
+	| expr
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"arg\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	|
+	{
+		$$ = nodeCounter;
+		let ag1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"arg\"];';
+		dotData += ag1+'[label=\"null\"];';
+		dotData += nodeCounter+'->'+ag1+';';
+
+		nodeCounter += 2;
+	}
 ;
 
 case_stm
 	: CASE value COLON L_CURLY stm_list R_CURLY case_stm
 	{
-		let c1 = create_case($2, $5);
-		let cases1 = [c1];
-		if($7 != null)
-		{
-			$7.forEach(element => {
-				cases1.push(element);
-			});
-		}
-		$$ = cases1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"case_stm\"];';
+		dotData += nodeCounter+'->'+$2+';';
+		dotData += nodeCounter+'->'+$5+';';
+		dotData += nodeCounter+'->'+$7+';';
+
+		nodeCounter += 1;
 	}
 	| CASE value COLON stm_list case_stm
 	{
-		let c2 = create_case($2, $4);
-		let cases2 = [c2];
-		if($5 != null)
-		{
-			$5.forEach(element => {
-				cases2.push(element);
-			});
-		}
-		$$ = cases2;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"case_stm\"];';
+		dotData += nodeCounter+'->'+$2+';';
+		dotData += nodeCounter+'->'+$4+';';
+		dotData += nodeCounter+'->'+$5+';';
+
+		nodeCounter += 1;
 	}
 	| DEFAULT COLON L_CURLY stm_list R_CURLY
 	{
-		let defString1 = create_string('default');
-		$$ = [create_case(defString1, $4)];
+		$$ = nodeCounter;
+		let cstm1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"case_stm\"];';
+		dotData += cstm1+'[label=\"DEFAULT\"];';
+		dotData += nodeCounter+'->'+$cstm1+';';
+		dotData += nodeCounter+'->'+$4+';';
+
+		nodeCounter += 2;
 	}
 	| DEFAULT COLON stm_list
 	{
-		let defString2 = create_string('default');
-		$$ = [create_case(defString2, $3)];
-	}
-	|
-	{
-		$$ = null;
+		$$ = nodeCounter;
+		let cstm2 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"case_stm\"];';
+		dotData += cstm2+'[label=\"DEFAULT\"];';
+		dotData += nodeCounter+'->'+cstm2+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 expr
 	: expr COMMA op_assign
 	{
-		if($1.model == 'Expression')
-		{
-			//create array with [expr, op_assign]
-			let e = create_expression_element($3);
-			let arr = [$1, e];
-			$$ = arr;
-		}
-		else
-		{
-			// add a new expression element to the list
-			$$.push(create_expression_element($3));
-		}
+		$$ = nodeCounter;
+		let exp1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"expr\"];';
+		dotData += nodeCounter+'->'+exp1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 	| op_assign
 	{
-		$$ = create_expression_element($1);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"expr\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_assign
 	: op_if ASSIGN op_assign
 	{
-		$$ = create_assignoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_assign\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_if
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_assign\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_if
 	: op_or QUESTION op_if COLON op_if
 	{
-		$$ = create_ternaryoperation($1, $3, $5);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_if\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_or
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_if\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_or
 	: op_or OR op_and
 	{
-		$$ = create_logicaloperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_or\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_and
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_or\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_and
 	: op_and AND op_bin_or
 	{
-		$$ = create_logicaloperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_and\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_bin_or
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_and\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_bin_or
 	: op_bin_or BIN_OR op_bin_xor
 	{
-		$$ = create_bitwiseoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_bin_or\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_bin_xor
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_bin_or\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_bin_xor
 	: op_bin_xor BIN_XOR op_bin_and
 	{
-		$$ = create_bitwiseoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_bin_xor\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_bin_and
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_bin_xor\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_bin_and
 	: op_bin_and BIN_AND op_equate
 	{
-		$$ = create_bitwiseoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_bin_and\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_equate
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_bin_and\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_equate
 	: op_equate EQUAL op_compare
 	{
-		$$ = create_relationaloperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_equate\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_equate NOT_EQUAL op_compare
 	{
-		$$ = create_relationaloperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_equate\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_compare
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_equate\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_compare
 	: op_compare LESS op_shift
 	{
-		$$ = create_relationaloperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_compare\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_compare GREATER op_shift
 	{
-		$$ = create_relationaloperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_compare\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_compare LESS_EQUAL op_shift
 	{
-		$$ = create_relationaloperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_compare\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_compare GREATER_EQUAL op_shift
 	{
-		$$ = create_relationaloperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_compare\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_shift
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_compare\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_shift
 	: op_shift L_SHIFT op_add
 	{
-		$$ = create_shiftoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_shift\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_shift R_SHIFT op_add
 	{
-		$$ = create_shiftoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_shift\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_add
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_shift\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_add
 	: op_add PLUS op_mult
 	{
-		$$ = create_arithmeticoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_add\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_add MINUS	op_mult
 	{
-		$$ = create_arithmeticoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_add\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_mult
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_add\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_mult
 	: op_mult MULTIPLY op_unary
 	{
-		$$ = create_arithmeticoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_mult\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_mult DIVIDE op_unary
 	{
-		$$ = create_arithmeticoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_mult\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_mult REMAINDER op_unary
 	{
-		$$ = create_arithmeticoperation($1, $3, $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_mult\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_unary
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_mult\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 op_unary
 	: NOT op_unary
 	{
-		$$ = create_unaryoperation($2, $1);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];';
+		dotData += nodeCounter+'->'+$2+';';
+
+		nodeCounter += 1;
 	}
 	| BIN_NOT op_unary
 	{
-		$$ = create_unaryoperation($2, $1);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];';
+		dotData += nodeCounter+'->'+$2+';';
+
+		nodeCounter += 1;
 	}
 	| op_unary INCREMENT
 	{
-		// RANDOM COMMENT
-		$$ = create_unaryoperation($1, '++');
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];';
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| op_unary DECREMENT
 	{
-		$$ = create_unaryoperation($1, '--');
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];';
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| MINUS	op_unary
 	{
-		$$ = create_unaryoperation($2, $1);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];';
+		dotData += nodeCounter+'->'+$2+';';
+
+		nodeCounter += 1;
 	}
 	| op_unary POWER op_pointer
 	{
-		$$ = create_unaryoperation(create_power($1,$3), $2);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 1;
 	}
 	| op_pointer
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_unary\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
@@ -1392,196 +2039,260 @@ op_pointer
 		// array . push ( op_pointer ) ;
 		// array . pop ( ) ;
 		// array . length ;
+		// OP POINTER OK
 		$$ = null;
 	}
 	| op_pointer L_SQUARE expr R_SQUARE
 	{
 		//array access
-		let arrayList = [];
-		let ArrayAccess = 
-		{
-			model: 'ArrayAccess',
-			id: $1,
-			index: $3,
-		};
-		$$ = ArrayAccess;
+		$$ = nodeCounter;
+		let opp1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"op_pointer\"];';
+		dotData += opp1+'[label=\"op_pointer\"];';
+		dotData += nodeCounter+'->'+$1+';';
+		dotData += nodeCounter+'->'+opp1+';';
+
+		nodeCounter += 2;
 	}
 	| value
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"op_pointer\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 ;
 
 string_function
 	: LENGTH
 	{
-		$$ = {
-			type: 'Length',
-		};
+		$$ = nodeCounter;
+		let sf1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"string_function\"];';
+		dotData += sf1+'[label=\"LENGTH\"];';
+		dotData += nodeCounter+'->'+sf1+';';
+
+		nodeCounter += 2;
 	}
 	| CHARAT L_PAR expr R_PAR
 	{
-		$$ = {
-			type: 'CharAt',
-			index: $3,		
-		};
+		$$ = nodeCounter;
+		let sf2 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"string_function\"];';
+		dotData += sf2+'[label=\"CHAR AT\"];';
+		dotData += nodeCounter+'->'+sf2+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 	| TOLOWERCASE L_PAR R_PAR
 	{
-		$$ = {
-			type: 'StringToLower',
-		};
+		$$ = nodeCounter;
+		let sf3 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"string_function\"];';
+		dotData += sf3+'[label=\"TO LOWER CASE\"];';
+		dotData += nodeCounter+'->'+sf3+';';
+
+		nodeCounter += 2;
 	}
 	| TOUPPERCASE L_PAR R_PAR
 	{
-		$$ = {
-			type: 'StringToUpper',
-		};
+		$$ = nodeCounter;
+		let sf4 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"string_function\"];';
+		dotData += sf4+'[label=\"TO UPPER CASE\"];';
+		dotData += nodeCounter+'->'+sf4+';';
+
+		nodeCounter += 2;
 	}
 	| CONCAT L_PAR expr R_PAR
 	{
-		$$ = {
-			type: 'StringConcat',
-			value: $3,
-		};
+		$$ = nodeCounter;
+		let sf5 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"string_function\"];';
+		dotData += sf5+'[label=\"CONCAT\"];';
+		dotData += nodeCounter+'->'+sf5+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 ;
 
 value
 	: NUMBER
 	{
-		$$ = create_number($1);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| DECIMAL
 	{
-		$$ = create_number($1);
+		$$ = nodeCounter;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+
+		dotData += nodeCounter+'->'+$1+';';
+
+		nodeCounter += 1;
 	}
 	| STRING DOT string_function
 	{
-		let s3 = $1.replace(/\"/g, "");
-		let s4 = s3.replace(/\'/g, "");
+		$$ = nodeCounter;
+		let vl1 = nodeCounter+1;
 
-		if($3.type == 'Length')
-		{
-			$$ = create_stringlength(s4);
-		}
-		else if($3.type == 'CharAt')
-		{
-			$$ = create_stringcharat(s4, $3.index);
-		}
-		else if($3.type == 'StringToLower')
-		{
-			$$ = create_stringtolower(s4);
-		}
-		else if($3.type == 'StringToUpper')
-		{
-			$$ = create_stringtoupper(s4);
-		}
-		else if($3.type == 'StringConcat')
-		{
-			$$ = create_stringconcat(s4, $3.value);
-		}
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl1+'[label=\"'+$1+'\"];';
+		dotData += nodeCounter+'->'+vl1+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 	| STRING
 	{
-		let s = $1.replace(/\"/g, "");
-		let s2 = s.replace(/\'/g, "");
-		$$ = create_string(s2);
+		$$ = nodeCounter;
+		let vl001 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl001+'[label=\"'+$1+'\"];';
+		dotData += nodeCounter+'->'+vl001+';';
+
+		nodeCounter += 2;
 	}
 	| NAME DOT string_function
 	{
-		let nameDotFunction = $1.toLowerCase();
-		if($3.type == 'Length')
-		{
-			$$ = create_stringlength(nameDotFunction);
-		}
-		else if($3.type == 'CharAt')
-		{
-			$$ = create_stringcharat(nameDotFunction, $3.index);
-		}
-		else if($3.type == 'StringToLower')
-		{
-			$$ = create_stringtolower(nameDotFunction);
-		}
-		else if($3.type == 'StringToUpper')
-		{
-			$$ = create_stringtoupper(nameDotFunction);
-		}
-		else if($3.type == 'StringConcat')
-		{
-			$$ = create_stringconcat(nameDotFunction, $3.value);
-		}
+		$$ = nodeCounter;
+		let vl2 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl2+'[label=\"'+$1+'\"];';
+		dotData += nodeCounter+'->'+vl2+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 	| NAME
 	{
-		if($1 == 'true' || $1 == 'false')
-		{
-			$$ = create_boolean($1);
-		}
-		else
-		{
-			$$ = create_variable($1);
-		}
+		$$ = nodeCounter;
+		let vl002 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl002+'[label=\"'+$1+'\"];';
+		dotData += nodeCounter+'->'+vl002+';';
+
+		nodeCounter += 2;
 	}
 	| NAME L_PAR expr R_PAR
 	{
-		//function call
-		
-		$$ = create_call($1, $3);
+		$$ = nodeCounter;
+		let vl02 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl02+'[label=\"'+$1+'()\"];';
+		dotData += nodeCounter+'->'+vl02+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
 	}
 	| NAME L_PAR      R_PAR	
 	{
-		//function call
-		$$ = create_call($1, null);
+		$$ = nodeCounter;
+		let vl3 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl3+'[label=\"'+$1+'()\"];';
+		dotData += nodeCounter+'->'+vl3+';';
+
+		nodeCounter += 2;
 	}
 	| L_SQUARE expr R_SQUARE
 	{
 		//array assignment [elements]
-		$$ = create_arrayassignment($2);
+		$$ = nodeCounter;
+		let vl4 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl4+'[label=\"['+$2+']\"];';
+		dotData += nodeCounter+'->'+vl4+';';
+
+		nodeCounter += 2;
 	}
 	| L_SQUARE		R_SQUARE
 	{
-		//array assignment []
-		$$ = create_arrayassignment(null);
+		$$ = nodeCounter;
+		let vl5 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl5+'[label=\"['+$2+']\"];';
+		dotData += nodeCounter+'->'+vl5+';';
+
+		nodeCounter += 2;
 	}
 	| L_PAR expr R_PAR
 	{
-		$$ = $2;
-	}
-	| NAME DOT LENGTH
-	{
-		$$ = create_length($1);
+		$$ = nodeCounter;
+		let vl6 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl6+'[label=\"('+$2+')\"];';
+		dotData += nodeCounter+'->'+vl6+';';
+
+		nodeCounter += 2;
 	}
 	| NAME DOT access_list
 	{
-		let name_accesslist = [];
-		name_accesslist.push($1);
-		$3.forEach(e => {
-			name_accesslist.push(e);
-		});
-		$$ = create_accesslist(name_accesslist);
+		$$ = nodeCounter;
+		let vl7 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"value\"];';
+		dotData += vl7+'[label=\"'+$2+'\"];';
+		dotData += nodeCounter+'->'+vl7+';';
+		dotData += nodeCounter+'->'+$3+';';
+
+		nodeCounter += 2;
+	}
+	| NEW ARRAY L_PAR expr R_PAR
+	{
+		
 	}
 ;
 
 access_list
 	: NAME DOT access_list
 	{
-		let accesslist1 = [];
-		if(Array.isArray($3))
-		{
-			$3.forEach(id =>{
-				accesslist1.push(id);
-			});
-		}
-		else
-		{
-			accesslist1.push($1);
-			accesslist1.push($3);
-		}
-		$$ = accesslist1;
+		$$ = nodeCounter;
+		let al2 = nodeCounter+1;
+		let al3 = nodeCounter+2;
+
+		dotData += nodeCounter+'[label=\"access_list\"];';
+		dotData += al2+'[label=\"'+ $1 +'\"];';
+		dotData += al3+'[label=\"'+ $3 +'\"];';
+		dotData += nodeCounter+'->'+al2+';';
+		dotData += nodeCounter+'->'+al3+';';
+
+		nodeCounter += 3;
 	}
 	| NAME
 	{
-		$$ = $1;
+		$$ = nodeCounter;
+		let al1 = nodeCounter+1;
+
+		dotData += nodeCounter+'[label=\"access_list\"];';
+		dotData += al1+'[label=\"'+ $1 +'\"];';
+		dotData += nodeCounter+'->'+al1+';';
+
+		nodeCounter += 2;
 	}
 ;

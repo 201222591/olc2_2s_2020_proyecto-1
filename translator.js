@@ -1,4 +1,4 @@
-var Symbol = function(t, ret, id, val, len, scope, pos, scope2)
+var Symbol = function(t, ret, id, val, len, scope, pos, scope2, nDim, oPos, arrLen)
 {
     this.model = 'Symbol';
     this.type = t; //function or variable 
@@ -6,9 +6,12 @@ var Symbol = function(t, ret, id, val, len, scope, pos, scope2)
     this.id = id; // name
     this.value = val;
     this.length = len; // 1 if var, else val.length
-    this.scope = scope; // local or global
-    this.position = pos;
-    this.scope2 = scope2;
+    this.scope = scope; // let / const
+    this.position = pos; // position in stack relative to P
+    this.scope2 = scope2; // local / global
+    this.nDim = nDim; // number of array dimensions
+    this.oPos = oPos; // stack position for types
+    this.arrLen = arrLen; // array's length
 };
 
 var SymbolTable = function()
@@ -46,6 +49,18 @@ var tmpArray = [];
 //var s_counter = 0; // stack  counter
 var t_counter = 0;
 var l_counter = 0;
+
+// AST node counter
+var nodeCounter = 1;
+var dotData = '';
+var astAddress = 'https://dreampuf.github.io/GraphvizOnline/#digraph{';
+//astAddress += 'rankdir=LR;';
+
+//array type
+var arrayType = '';
+var currentArrayLength;
+var currentArrayID;
+var returnedArrayLength;
 
 var header = `
 #include <stdio.h> 
@@ -129,11 +144,14 @@ function isSymbolInTable(ts, id)
 function saveGlobal(ast)
 {
     tsStack = [];
+    p = [];
+    pStack = [];
     lexicalErrors = [];
     syntaxErrors = []
     semanticErrors = [];
     tmpArray = [];
     finalSymbolTable = [];
+    dotData = '';
 
 
     let globalTS = new SymbolTable();
@@ -143,7 +161,13 @@ function saveGlobal(ast)
         ast.forEach(stm => {
             if(stm.model == 'Function')
             {
-                let f = new Symbol('Function', stm.returnType, stm.id, stm.statements, stm.parameters, 'var', -1, 'Global');
+                let f = new Symbol('Function', stm.returnType, stm.id, stm.statements, stm.parameters, 'var', -1, 'Global', -1, -1, -1);
+                globalTS.symbols.push(f);
+                finalSymbolTable.push(f);
+            }
+            else if(stm.model == 'ObjectDeclaration')
+            {
+                let f = new Symbol('Type', stm.id , stm.id, stm.attributes, null, 'var', -1, 'Global', -1, -1, -1);
                 globalTS.symbols.push(f);
                 finalSymbolTable.push(f);
             }
@@ -166,6 +190,10 @@ function translate(ast)
             else if(ast[i].model == 'Declaration')
             {
                 translateDeclaration(ast[i]);
+            }
+            else if(ast[i].model == 'Object')
+            {
+                translateObject(ast[i]);
             }
             else if(ast[i].model == 'Expression')
             {
@@ -228,7 +256,9 @@ function translate(ast)
                 pStack.push(0);
                 let previousIndex = pStack.length-2;
                 p.push(pStack[previousIndex] + p[previousIndex]); // save new P value
+
                 translateFor(ast[i]);
+                
                 tsStack.pop();
                 pStack.pop();
                 p.pop();
@@ -269,10 +299,6 @@ function translate(ast)
                 pStack.pop();
                 p.pop();
             }
-            else if(ast[i].model == 'GraficarTS')
-            {
-                translateGraficarts(ast[i]);
-            }
             else if(ast[i].model == 'ConsoleLog')
             {
                 translateConsolelog(ast[i]);
@@ -281,7 +307,9 @@ function translate(ast)
             {
                 if(breakStack.length > 0)
                 {
+                    resultCode += '//BREAK\n';
                     resultCode += 'goto '+breakStack[breakStack.length-1]+';\n';
+                    resultCode += '//BREAK\n';
                 }
                 else
                 {
@@ -293,7 +321,9 @@ function translate(ast)
             {
                 if(continueStack.length > 0)
                 {
+                    resultCode += '//CONTINUE\n';
                     resultCode += 'goto '+continueStack[continueStack.length-1]+';\n';
+                    resultCode += '//CONTINUE\n';
                 }
                 else
                 {
@@ -318,66 +348,123 @@ function translateDeclaration(stm)
             sPointer = pStack[pStack.length-1];
             let scope2 = tsStack.length == 1 ? 'Global' : 'Local';
             let typesMatch = false;
-            if(d.value != null)
+            if(d.array == null)
             {
-                let value = translateExpression(d.value);
-                
-                resultCode += 'stack[(int)P+'+sPointer+'] = ' + resultTemp + ';\n';
-                // guardar en la tabla de simbolos
-                let sym = new Symbol('Declaration', d.type, d.id, executeExpression(d.value), d.array, stm.scope, sPointer, scope2);
-                tsStack[tsStack.length-1].symbols.push(sym);
-                finalSymbolTable.push(sym);
-                //console.log(d.id + '\t' + sPointer + '\t' + d.type + '\t' + sym.value);
-                //sPointer++;
-                pStack[pStack.length-1]++;
-            }
-            else
-            {
-                //let value = translateExpression(d.value);
-                let defaultValue = null;
-                let temp = create_t();
-                if(d.type == 'number') 
+                if(d.value != null)
                 {
-                    let n = {
-                        model: 'Number',
-                        value: 0
-                    };
-                    translateExpression(n);
-                }
-                else if(d.type == 'string')
-                {
-                    let s = {
-                        model: 'String',
-                        value: ''
-                    };
-                    translateExpression(s);
-                }
-                else if(d.type == 'boolean')
-                {
-                    let s = {
-                        model: 'Boolean',
-                        value: false
-                    };
-                    translateExpression(s);
-                }
-                if(d.value == null && stm.scope.toLowerCase() == 'const')
-                {
-                    semanticErrors.push(new Error('La variable '+d.id+' es constante. Debe declararse el valor.', 0, 0));
-
-                }
-                else
-                {
-                    resultCode += 'stack[(int)P+'+sPointer+'] = ' + resultTemp + ';\n';
+                    let value = translateExpression(d.value);
+                    
+                    resultCode += 'stack[(int)(P + '+sPointer+')] = ' + resultTemp + ';\n';
                     // guardar en la tabla de simbolos
-                    let value = d.value != null ? executeExpression(d.value) : null;
-                    let sym = new Symbol('Declaration', d.type, d.id, value, d.array, stm.scope, sPointer, scope2);
+                    let sym = new Symbol('Declaration', d.type, d.id, executeExpression(d.value), d.array, stm.scope, sPointer, scope2, 0, -1, 0);
                     tsStack[tsStack.length-1].symbols.push(sym);
                     finalSymbolTable.push(sym);
                     //console.log(d.id + '\t' + sPointer + '\t' + d.type + '\t' + sym.value);
                     //sPointer++;
                     pStack[pStack.length-1]++;
                 }
-            } 
+                else
+                {
+                    //let value = translateExpression(d.value);
+                    let defaultValue = null;
+                    let temp = create_t();
+                    if(d.type == 'number') 
+                    {
+                        let n = {
+                            model: 'Number',
+                            value: 0
+                        };
+                        translateExpression(n);
+                    }
+                    else if(d.type == 'string')
+                    {
+                        let s = {
+                            model: 'String',
+                            value: ''
+                        };
+                        translateExpression(s);
+                    }
+                    else if(d.type == 'boolean')
+                    {
+                        let s = {
+                            model: 'Boolean',
+                            value: false
+                        };
+                        translateExpression(s);
+                    }
+                    if(d.value == null && stm.scope.toLowerCase() == 'const')
+                    {
+                        semanticErrors.push(new Error('La variable '+d.id+' es constante. Debe declararse el valor.', 0, 0));
+
+                    }
+                    else
+                    {
+                        resultCode += 'stack[(int)(P + '+sPointer+')] = ' + resultTemp + ';\n';
+                        // guardar en la tabla de simbolos
+                        let value = d.value != null ? executeExpression(d.value) : null;
+                        let sym = new Symbol('Declaration', d.type, d.id, value, d.array, stm.scope, sPointer, scope2, 0, -1, -1);
+                        tsStack[tsStack.length-1].symbols.push(sym);
+                        finalSymbolTable.push(sym);
+                        //console.log(d.id + '\t' + sPointer + '\t' + d.type + '\t' + sym.value);
+                        //sPointer++;
+                        pStack[pStack.length-1]++;
+                    }
+                } 
+            }
+            else
+            {
+                /*console.log('Declarando arreglo');
+                console.log(stm);*/
+                //stm: idList: array, id, type, value() b
+                arrayType = d.type;
+                stm.idList.forEach(dec => {
+                    if(dec.value == null)
+                    {
+                        // save empty array
+                        /*resultCode += 'heap[(int)H] = ';
+                        resultCode += 'stack[(int)P+'+sPointer+'] = ' + resultTemp + ';\n';*/
+                        let nDim = dec.array.match(/\[/g);
+                        let decValue = dec.value != null ? dec.value.value : null
+                        let decValueLength = decValue == null ? -1 : decValue.length;
+                        let sym = new Symbol('Declaration', dec.type, dec.id, decValue, dec.array, stm.scope, sPointer, scope2, nDim.length, -1, decValueLength);
+                        tsStack[tsStack.length-1].symbols.push(sym);
+                        pStack[pStack.length-1]++;
+                        finalSymbolTable.push(sym);
+                        // AGREGAR A STACK
+                    }
+                    else
+                    {
+                        // evaluate VALUE
+                        //console.log(dec.value);
+                        if(dec.value.model == 'ArrayAssignment') //        [expr]  expr-> expr,expr...
+                        {
+                            let nDim = dec.array.match(/\[/g);
+                            currentArrayLength = nDim.length;
+                            currentArrayID = dec.id;
+                            let value = translateExpression(dec.value);
+                            let tr = resultTemp;
+                            if(true)
+                            {
+                                
+                                let decValue = dec.value != null ? dec.value.value : null
+                                let decValueLength = decValue == null ? -1 : decValue.length;
+                                let sym = new Symbol('Declaration', dec.type, dec.id, decValue, dec.array, stm.scope, sPointer, scope2, nDim.length, -1, decValueLength);
+                                tsStack[tsStack.length-1].symbols.push(sym);
+                                pStack[pStack.length-1]++;
+                                finalSymbolTable.push(sym);
+                            }
+                            else
+                            {
+                                // translateExpression should return the 
+                            }
+                        }
+                        else if(dec.value.model == 'NewArray') // new array(expr)  expr-> expr,expr...
+                        {
+
+                        }
+                    }
+                });
+            }
         }
         else
         {
@@ -385,6 +472,72 @@ function translateDeclaration(stm)
             semanticErrors.push(new Error('La variable '+d.id+' ya ha sido declarada localmente.', 0, 0));
         }
     });    
+}
+
+function translateObject(stm)
+{
+    // translating instance of TYPE
+    // stm.type
+    // stm.attributes
+    let size = tsStack[0].symbols.length;
+    for(let k=0; k<size; k++)
+    {
+        if(tsStack[0].symbols[k].id == stm.type)
+        {
+            //type exist
+            let typeID = tsStack[0].symbols[k].id;
+            let typeAttributes = Array.isArray(tsStack[0].symbols[k].value) ? tsStack[0].symbols[k].value : [tsStack[0].symbols[k].value];
+            // check if id is used
+            let index = tsStack.length-1;
+            for(let j=0; j<tsStack[index].symbols.length; j++)
+            {
+                if(tsStack[index].symbols[j].id == stm.id)
+                {
+                    semanticErrors.push(new Error('Ya se ha declarado la variable '+stm.id, 0, 0));
+                    return;
+                }
+                else
+                {
+                    // save??
+                    // stm.attributes.id/value
+                    let attributes = Array.isArray(stm.attributes) ? stm.attributes : [stm.attributes];
+                    let attributeIndex = 0;
+                    sPointer = pStack[pStack.length-1]; // next available space in stack
+                    let ts = create_t(); // ts will store the first position in the heap (as strings)
+                    resultCode += ts+' = H;\n'; // save H in stack
+                    resultCode += 'H = H + 1;\n';
+                    resultCode += 'stack[(int)(P + '+sPointer+')] = '+ts+';\n';
+                    attributes.forEach(atr => {
+                        /*console.log(atr.id);
+                        console.log(typeAttributes[attributeIndex].id);*/
+                        let sym;
+                        if(atr.id == typeAttributes[attributeIndex].id)
+                        {
+                            // names match
+                            // assume attribute type matches
+                            
+                        }
+                        else
+                        {
+                            semanticErrors.push(new Error('No coinciden el nombre del atributo '+stm.id+' con el de TYPE '+typeAttributes[attributeIndex].id, 0, 0));
+                            return;
+                        }
+
+                        attributeIndex += 1;
+                    });
+                    // create sym here
+                    return;
+                }
+            }
+            
+        }        
+        else if(stm.type == 'null')
+        {
+            console.log('TIPO ANONIMO ' + stm.id);
+            return;
+        }
+    }
+    semanticErrors.push(new Error('No existe el type '+stm.type, 0, 0));
 }
 
 function translateExpression(stm)
@@ -409,13 +562,30 @@ function translateExpression(stm)
             resultCode += t + ' = H;\n';     
             for(let i=0; i<stm.value.length; i++)
             {
-                resultCode += 'heap[(int)H] = ' + stm.value.charCodeAt(i) + ';\n';
-                resultCode += 'H = H+1;\n';
-                
                 if(i==0) resultTemp = t;
+
+                if(stm.value.charAt(i) == '\\')
+                {
+                    let tmpChar;
+                    if(stm.value.charAt(i+1) == 'n') tmpChar = 10;
+                    else if (stm.value.charAt(i+1) == '\"') tmpChar = 34;
+                    else if (stm.value.charAt(i+1) == '\\') tmpChar = 92;
+                    else if (stm.value.charAt(i+1) == 'r') tmpChar = 13;
+                    else if (stm.value.charAt(i+1) == 't') tmpChar = 9;
+
+                    resultCode += 'heap[(int)H] = ' + tmpChar + ';\n';
+                    resultCode += 'H = H + 1;\n';
+
+                    i++;
+                }
+                else
+                {
+                    resultCode += 'heap[(int)H] = ' + stm.value.charCodeAt(i) + ';\n';
+                    resultCode += 'H = H + 1;\n';
+                }                
             }
             resultCode += 'heap[(int)H] = -1;\n';
-            resultCode += 'H = H+1;\n';
+            resultCode += 'H = H + 1;\n';
         }
         else
         {
@@ -424,7 +594,7 @@ function translateExpression(stm)
 
             resultCode += t + ' = H;\n';
             resultCode += 'heap[(int)H] = -1;\n';
-            resultCode += 'H = H+1;\n';
+            resultCode += 'H = H + 1;\n';
             resultTemp = t;
         }
         resultCode += '//TERMINA CADENA\n';
@@ -471,34 +641,49 @@ function translateExpression(stm)
                     let sym = tsStack[i].symbols[j];
                     if(sym.id == stm.value)
                     {
+
+                        if(sym.nDim == 0)
+                        {
+                            let position = /*p[i]  +*/ sym.position;
+                            let t = create_t();
+                            let t0 = create_t();
+                            let t1 = create_t();
+                            let t2 = create_t();
+                            let l0 = create_l();
+                            let l1 = create_l();
+                            let l2 = create_l();
+
+                            resultCode += '//EMPIEZA VARIABLE LENGTH\n'; // 'hola'.length => 4
+                            resultCode += t0+' = '+position+';//pos='+position+'\n';
+                            resultCode += t1+' = (int)0;\n';
+                            resultCode += t+' = stack[(int)(P + '+t0+')];\n';
+                            resultCode += l0+':\n';
+                            resultCode += t2+' = heap[(int)'+t+'];\n';
+                            resultCode += 'if('+t2+' == -1) goto '+l2+';\n';
+                            resultCode += 'goto '+l1+';\n';
+                            resultCode += l1+':\n';
+                            resultCode += t+' = '+t+'+1;\n';
+                            resultCode += t1+' = '+t1+'+1;\n';
+                            resultCode += 'goto '+l0+';\n';
+                            resultCode += l2+':\n';
+                            resultCode += '//TERMINA VARIABLE LENGTH\n';
+
+                            resultTemp = t1;
+                            resultType = 'number';
+                            return 100;
+                        }
+                        else
+                        {
+                            resultCode += '//EMPIEZA ARRAY LENGTH\n';
+                            let tr = create_t();
+                            resultCode += tr+' = '+sym.value.length+';\n';
+                            resultCode += '//TERMINA ARRAY LENGTH\n';
+                            resultTemp = tr;
+                            resultType = 'number';
+                            return 100;
+                        }
                         // symbol found
-                        let position = p[i] + sym.position;
-                        let t = create_t();
-                        let t0 = create_t();
-                        let t1 = create_t();
-                        let t2 = create_t();
-                        let l0 = create_l();
-                        let l1 = create_l();
-                        let l2 = create_l();
-
-                        resultCode += '//EMPIEZA VARIABLE LENGTH\n';
-                        resultCode += t0+' = '+position+';//pos='+position+'\n';
-                        resultCode += t1+' = (int)0;\n';
-                        resultCode += t+' = stack[(int)'+t0+'];\n';
-                        resultCode += l0+':\n';
-                        resultCode += t2+' = heap[(int)'+t+'];\n';
-                        resultCode += 'if('+t2+' == -1) goto '+l2+';\n';
-                        resultCode += 'goto '+l1+';\n';
-                        resultCode += l1+':\n';
-                        resultCode += t+' = '+t+'+1;\n';
-                        resultCode += t1+' = '+t1+'+1;\n';
-                        resultCode += 'goto '+l0+';\n';
-                        resultCode += l2+':\n';
-                        resultCode += '//TERMINA VARIABLE LENGTH\n';
-
-                        resultTemp = t1;
-                        resultType = 'number';
-                        return 100;
+                        
                     }
                     continue;
                 }
@@ -532,9 +717,9 @@ function translateExpression(stm)
             resultCode += t2+' = (int)heap[(int)'+t1+'];\n';
             resultCode += t3+' = H;\n';
             resultCode += 'heap[(int)H] = '+t2+';\n';
-            resultCode += 'H = H+1;\n';
+            resultCode += 'H = H + 1;\n';
             resultCode += 'heap[(int)H] = -1;\n';
-            resultCode += 'H = H+1;\n';
+            resultCode += 'H = H + 1;\n';
             resultCode += '//TERMINA CHAR AT\n';
             resultTemp = t3;
             resultType = 'string';
@@ -551,7 +736,7 @@ function translateExpression(stm)
                     if(sym.id == stm.value)
                     {
                         // symbol found
-                        let position = p[i] + sym.position;
+                        let position = /*p[i] + */sym.position;
                         /*
                         t0 = stack[pos]
                         t1 = heap[t0+index]
@@ -566,13 +751,13 @@ function translateExpression(stm)
                        let t2 = create_t();
                        translateExpression(stm.index);
                        let index = resultTemp;
-                       resultCode += t0+' = stack[(int)'+position+'];\n';
+                       resultCode += t0+' = stack[(int)(P + '+position+')];\n';
                        resultCode += t1+' = (int)heap[(int)('+t0+'+'+index+')];\n';
                        resultCode += t2+' = H;\n'; 
                        resultCode += 'heap[(int)H] = '+t1+';\n';
-                       resultCode += 'H = H+1;\n';
+                       resultCode += 'H = H + 1;\n';
                        resultCode += 'heap[(int)H] = -1;\n';
-                       resultCode += 'H = H+1;\n';
+                       resultCode += 'H = H + 1;\n';
                        resultCode += '//TERMINA CHAR AT\n';
                        resultTemp = t2;
                        resultType = 'string';
@@ -747,16 +932,16 @@ function translateExpression(stm)
         resultCode += 'goto '+l4+';\n';
         resultCode += l2+':\n';
         resultCode += 'heap[(int)H] = '+t2+';\n';
-        resultCode += 'H = H+1;';
+        resultCode += 'H = H + 1;';
         resultCode += t0+' = '+t0+'+1;\n';
         resultCode += 'goto '+l3+';\n';
         resultCode += l5+':\n';
         resultCode += 'heap[(int)H] = -1;\n';
-        resultCode += 'H = H+1;';
+        resultCode += 'H = H + 1;';
         resultCode += 'goto '+lsalida+';\n';
         resultCode += l4+':\n';
         resultCode += 'heap[(int)H] = '+t3+';\n';
-        resultCode += 'H = H+1;';
+        resultCode += 'H = H + 1;';
         resultCode += t1+' = '+t1+'+1;\n';
         resultCode += 'goto '+l1+';\n';
         resultCode += lsalida+':\n';
@@ -778,6 +963,7 @@ function translateExpression(stm)
                 {
                     let sym = tsStack[i].symbols[j];
                     // variable is in stack[p[i] + sym.position]
+                    // resultCode += 'P = '+p[i];
                     let t = create_t();
                     let position = p[i] + sym.position;
                     resultCode += '//EMPIEZA RECUPERACION DE VARIABLE '+stm.id+';\n';
@@ -822,14 +1008,180 @@ function translateExpression(stm)
         else if(stm.model == 'Length')
         {
             // obtener longitud de arreglo desde la tabla de simbolos
+            //sym.value.length
+            let tsIndex = tsStack.length-1;
+            for(let i=tsIndex; i>=0; i--)
+            {
+                for(let j=0; j<tsStack[i].symbols.length; j++)
+                {
+                    if(sym.id ==  null)
+                    {
+
+                    }
+                    resultCode += '//INICIA ARRAY LENGTH\n';
+                    let t0 = create_t();
+                    let sym = tsStack[i].symbols[j];
+                    let arraySize = Array.isArray(sym.value) ? sym.value.length : 0;
+                    resultCode += t0+' = '+arraySize+';\n';
+                    resultCode += '//TERMINA ARRAY LENGTH\n';
+                    resultTemp = t0;
+                    resultType = 'number';
+                    return 100.5;
+                }
+            }
         }
         else if(stm.model == 'ArrayAssignment')
         {
-            
+            //       X = [expr]  expr-> expr,expr...
+            //console.log(stm.value.expression.model);
+            // let b:number[] = [2]
+            sPointer = pStack[pStack.length-1];
+            //console.log(arrayType);
+            let value = Array.isArray(stm.value) ? stm.value : [stm.value];
+            //console.log(value);
+            if(stm.value == null)//ESTO
+            {
+                return null;
+            }
+            else
+            {
+                let arrayLength = currentArrayLength == null ? value.length : currentArrayLength;
+                let arrayID = currentArrayID;
+                let currentType = value[0].expression.model;
+                currentArrayID = null;
+                currentArrayLength = null;
+
+                if(arrayLength == 1 || arrayID == null) // arrayID null significa que es un arreglo "anonimo" y debe ser de una dimension
+                {
+                    resultCode += '//INICIA GUARDAR ARREGLO\n';
+                    let temps = []; // si es un arreglo tipo "number", contendra los temporales que guardan los numeros/booleanos, si es "string" contendra los apuntadores al heap de los inicios de cadena
+                    let tr = create_t();               
+                    
+                    value.forEach(v => {
+                        translateExpression(v);
+                        let currentTemp = resultTemp;
+                        temps.push(currentTemp);
+                    });
+
+                    resultCode += tr+' = H;\n';
+
+                    temps.forEach(t => {
+                        resultCode += 'heap[(int)H] = '+t+';\n';
+                        resultCode += 'H = H + 1;\n';
+                    });
+                    
+                    resultCode += 'stack[(int)(P + '+sPointer+')] = '+tr+';\n';
+                    resultCode += '//TERMNINA GUARDAR ARREGLO\n';
+                    resultTemp = tr;
+                
+                    pStack[pStack.length-1]++;
+                    returnedArrayLength = value.length;
+                    return [currentType, arrayLength];
+                }
+                else
+                {
+                    // nDim > 1
+                    // linealizar arreglo
+                    if(arrayLength == 2)
+                    {
+                        console.log('LINEALIZAR ARREGLOS 2');
+                        let elements = []
+                        for(let i=0; i<arrayLength; i++)
+                        {
+                            // each element is model = ArrayAssignment
+                            //console.log(stm.value[i].expression.value);
+                            elements.push(stm.value[i].expression.value);
+                            // create Declaration
+                            let newArrayAssignment = {
+                                model : 'ArrayAssignment',
+                                value : elements
+                            };
+
+                            let newVarElement = {
+                                model : 'VarElement',
+                                id : arrayID,
+                                type : arrayType,
+                                array : '[]', 
+                                value : newArrayAssignment
+                            };
+
+                            let newDeclaration = {
+                                model : 'Declaration',
+                                scope : 'let',
+                                idList : [newVarElement]
+                            };
+
+                            //console.log(newDeclaration);
+                            translate([newDeclaration]);
+                            break;
+                        }
+                        
+                    }
+                    else if(arrayLength == 3)
+                    {
+
+                    }
+                }
+                
+            }
         }
         else if(stm.model == 'ArrayAccess')
         {
-            
+            console.log(stm);
+
+            //verificar stm.id
+            if(stm.id.model == 'Variable')
+            {
+                let id = stm.id.id;
+                let tsIndex = tsStack.length-1;
+                for(let i=tsIndex; i>=0; i--)
+                {
+                    for(let j=0; j<tsStack[i].symbols.length; j++)
+                    {
+                        if(tsStack[i].symbols[j].id == id){
+                            resultCode += '//EMPIEZA TRADUCIR INDICE\n';
+                            translateExpression(stm.index);
+                            let index = resultTemp;
+                            resultCode += '//TERMINA TRADUCIR INDICE\n';
+                            
+                            let sym = tsStack[i].symbols[j];
+                            let t0 = create_t();
+                            let t1 = create_t();
+                            resultCode += '//EMPIEZA ACCESO A ARREGLO\n';
+                            resultCode += t0+' = stack[(int)(P + '+sym.position+')];\n';
+                            resultCode += t1+' = heap[(int)('+t0+' + '+index+')];\n';
+                            if(sym.returnType == 'number')
+                            {
+                                resultCode += '//TERMINA ACCESO A ARREGLO\n';
+                                resultTemp = t1;
+                                resultType = 'number';
+                                return 100.5;
+                            }
+                            else if(sym.returnType == 'boolean')
+                            {
+                                resultCode += '//TERMINA ACCESO A ARREGLO\n';
+                                resultTemp = t1;
+                                resultType = 'boolean';
+                                return false;
+                            }
+                            else
+                            {
+                                resultCode += '//TERMINA ACCESO A ARREGLO\n';
+                                resultTemp = t1;
+                                resultType = sym.resultType;
+                                return 'string';
+                            }
+                            
+                            
+                        }
+                    }
+                }
+                semanticErrors.push(new Error('La variable '+id+' no existe.', 0, 0));
+            }
+            else
+            {
+                // ERROR
+            }
         }
         else if(stm.model == 'UnaryOperation')
         {
@@ -879,13 +1231,13 @@ function translateExpression(stm)
                                 tsStack[i].symbols[j].value++;
                                 // variable is in stack[p[i] + sym.position]
                                 let t = create_t();
-                                let position = p[i] + sym.position;
+                                let position = /*p[i] +*/ sym.position;
                                 resultCode += '//EMPIEZA OPERACION ++\n';
                                 resultCode += t + ' = ' + position + ';\n';
                                 let t1 = create_t();
                                 resultTemp = t1;
-                                resultCode += t1 + ' = stack[(int)'+t+']+1;\n';
-                                resultCode += 'stack[(int)'+t+'] = '+t1+';\n';
+                                resultCode += t1 + ' = stack[(int)(P + '+t+')]+1;\n';
+                                resultCode += 'stack[(int)(P + '+t+')] = '+t1+';\n';
 
                                 resultCode += '//TERMINA OPERACION ++\n';
                                 
@@ -923,13 +1275,13 @@ function translateExpression(stm)
                                 let sym = tsStack[i].symbols[j];
                                 // variable is in stack[p[i] + sym.position]
                                 let t = create_t();
-                                let position = p[i] + sym.position;
+                                let position = /*p[i] + */sym.position;
                                 resultCode += '//EMPIEZA OPERACION --\n';
                                 resultCode += t + ' = ' + position + ';\n';
                                 let t1 = create_t();
                                 resultTemp = t1;
-                                resultCode += t1 + ' = stack[(int)'+t+']-1;\n';
-                                resultCode += 'stack[(int)'+t+'] = '+t1+';\n';
+                                resultCode += t1 + ' = stack[(int)(P + '+t+')]-1;\n';
+                                resultCode += 'stack[(int)(P + '+t+')] = '+t1+';\n';
 
                                 resultCode += '//TERMINA OPERACION --\n';
                                 
@@ -1019,7 +1371,7 @@ function translateExpression(stm)
                 }
                 else if(aType == 'string' && (bType == 'number' || bType == 'boolean'))
                 {
-                   let l0 = create_l();
+                   /*let l0 = create_l();
                    let l1 = create_l();
                    let l2 = create_l();
                    let t2 = create_t();
@@ -1050,7 +1402,67 @@ function translateExpression(stm)
                    resultCode += '//TERMINA SUMA CADENA\n';
                    resultTemp = t1;
                    resultType = 'string';
+                   return 'string';*/
+
+                   let l0 = create_l();
+                   let l1 = create_l();
+                   let l2 = create_l();
+                   let t2 = create_t();
+
+                   resultCode += '//EMPIEZA SUMA CADENA\n';
+                   resultCode += t1+' = H;\n';
+                   resultCode += l0+':\n';
+                   resultCode += t2+' = heap[(int)'+a+'];\n';
+                   resultCode += 'if('+t2+' != -1) goto '+l1+';\n';
+                   resultCode += 'goto '+l2+';\n';
+                   resultCode += l1+':\n';
+                   resultCode += 'heap[(int)H] = '+t2+';\n';
+                   resultCode += 'H = H + 1;\n';
+                   resultCode += a+' = '+a+'+1;\n';
+                   resultCode += 'goto '+l0+';\n';
+                   resultCode += l2+':\n';
+
+                   /////
+                   let num = create_t();
+                   let temp = create_t();
+                   let factor = create_t();
+                   let dig = create_t();
+                   let l00 = create_l();
+                   let l10 = create_l();
+                   let l20 = create_l();
+                   let l30 = create_l();
+                   let l40 = create_l();
+
+                   resultCode += factor+' = 1;\n';
+                   resultCode += num+' = '+b+';\n';
+                   resultCode += temp+' = '+num+';\n';
+                   resultCode += l00+':\n';
+                   resultCode += 'if('+temp+' >= 1) goto '+l10+';\n';
+                   resultCode += 'goto '+l20+';\n';
+                   resultCode += l10+':\n';
+                   resultCode += temp+' = (int)('+temp+' / 10);\n';
+                   resultCode += factor+' = '+factor+' * 10;\n';
+                   resultCode += 'goto '+l00+';\n';
+                   resultCode += l20+':\n';
+                   resultCode += 'if('+factor+' > 1) goto '+l30+';\n';
+                   resultCode += 'goto '+l40+';\n';
+                   resultCode += l30+':\n';
+                   resultCode += factor+' = '+factor+' / 10;\n';
+                   resultCode += dig+' = '+num+' / '+factor+';\n';
+                   resultCode += 'heap[(int)H] = (int)'+dig+' + 48;//CONVERT TO ASCII\n'
+                   resultCode += 'H = H + 1;\n';
+                   
+                   resultCode += num+' = (int)'+num+' / (int)'+factor+';\n';
+                   resultCode += 'goto '+l20+';\n';
+                   resultCode += l40+':\n';
+                   resultCode += 'heap[(int)H] = -1;\n';
+                   resultCode += 'H = H + 1;\n';
+                   /////
+                   resultCode += '//TERMINA SUMA CADENA\n';
+                   resultTemp = t1;
+                   resultType = 'string';
                    return 'string';
+
                 }
                 else if((aType == 'number' || aType == 'boolean') && bType == 'string')
                 {
@@ -1062,11 +1474,40 @@ function translateExpression(stm)
                     resultCode += '//EMPIEZA SUMA CADENA\n';
                     resultCode += t1+' = H;\n';
 
-                    for(let i=0; i<numberToString.length; i++)
-                    {
-                        resultCode += 'heap[(int)H] = '+numberToString.charCodeAt(i)+';\n';
-                        resultCode += 'H = H+1;\n';
-                    }
+                    /////
+                   let num = create_t();
+                   let temp = create_t();
+                   let factor = create_t();
+                   let dig = create_t();
+                   let l00 = create_l();
+                   let l10 = create_l();
+                   let l20 = create_l();
+                   let l30 = create_l();
+                   let l40 = create_l();
+
+                   resultCode += factor+' = 1;\n';
+                   resultCode += num+' = '+a+';\n';
+                   resultCode += temp+' = '+num+';\n';
+                   resultCode += l00+':\n';
+                   resultCode += 'if('+temp+' >= 1) goto '+l10+';\n';
+                   resultCode += 'goto '+l20+';\n';
+                   resultCode += l10+':\n';
+                   resultCode += temp+' = (int)('+temp+' / 10);\n';
+                   resultCode += factor+' = '+factor+' * 10;\n';
+                   resultCode += 'goto '+l00+';\n';
+                   resultCode += l20+':\n';
+                   resultCode += 'if('+factor+' > 1) goto '+l30+';\n';
+                   resultCode += 'goto '+l40+';\n';
+                   resultCode += l30+':\n';
+                   resultCode += factor+' = '+factor+' / 10;\n';
+                   resultCode += dig+' = '+num+' / '+factor+';\n';
+                   resultCode += 'heap[(int)H] = (int)'+dig+' + 48;//CONVERT TO ASCII\n'
+                   resultCode += 'H = H + 1;\n';
+                   
+                   resultCode += num+' = (int)'+num+' / (int)'+factor+';\n';
+                   resultCode += 'goto '+l20+';\n';
+                   resultCode += l40+':\n';
+                   /////
 
                     resultCode += l0+':\n';
                     resultCode += t2+' = heap[(int)'+b+'];\n';
@@ -1074,14 +1515,14 @@ function translateExpression(stm)
                     resultCode += 'goto '+l2+';\n';
                     resultCode += l1+':\n';
                     resultCode += 'heap[(int)H] = '+t2+';\n';
-                    resultCode += 'H = H+1;\n';
+                    resultCode += 'H = H + 1;\n';
                     resultCode += b+' = '+b+'+1;\n';
                     resultCode += 'goto '+l0+';\n';
                     resultCode += l2+':\n';
  
                     
                     resultCode += 'heap[(int)H] = -1;\n';
-                    resultCode += 'H = H+1;\n';
+                    resultCode += 'H = H + 1;\n';
  
                     resultCode += '';
                     resultCode += '//TERMINA SUMA CADENA\n';
@@ -1103,7 +1544,7 @@ function translateExpression(stm)
                     resultCode += 'goto '+l2+';\n';
                     resultCode += l1+':\n';
                     resultCode += 'heap[(int)H] = '+t2+';\n';
-                    resultCode += 'H = H+1;\n';
+                    resultCode += 'H = H + 1;\n';
                     resultCode += a+' = '+a+'+1;\n';
                     resultCode += 'goto '+l0+';\n';
                     resultCode += l2+':\n';
@@ -1118,12 +1559,12 @@ function translateExpression(stm)
                     resultCode += 'goto '+l5+';\n';
                     resultCode += l4+':\n';
                     resultCode += 'heap[(int)H] = '+t2+';\n';
-                    resultCode += 'H = H+1;\n';
+                    resultCode += 'H = H + 1;\n';
                     resultCode += b+' = '+b+'+1;\n';
                     resultCode += 'goto '+l3+';\n';
                     resultCode += l5+':\n';
                     resultCode += 'heap[(int)H] = -1;\n';
-                    resultCode += 'H = H+1;\n'; 
+                    resultCode += 'H = H + 1;\n'; 
 
                     resultCode += '//TERMINA SUMA CADENA Y CADENA\n';
                     resultTemp = t1;
@@ -1672,7 +2113,7 @@ function translateExpression(stm)
                     for(let j=0; j<tsStack[i].symbols.length; j++)
                     {
                         let sym = tsStack[i].symbols[j];
-                        let pos = p[i] + sym.position;
+                        let pos = /*p[i] + */sym.position;
                         if(sym.scope != 'const')
                         {
                             if(sym.id == stm.value1.id)
@@ -1684,13 +2125,13 @@ function translateExpression(stm)
                                     if(sym.returnType == 'number' || sym.returnType == 'boolean')
                                     {
                                         // save new value in the stack
-                                        resultCode += 'stack[(int)'+pos+'] = '+resultTemp+';\n';
+                                        resultCode += 'stack[(int)(P + '+pos+')] = '+resultTemp+';\n';
                                         return true;
                                     }
                                     else if(sym.returnType == 'string')
                                     {
                                         // save new value
-                                        resultCode += 'stack[(int)'+pos+'] = '+resultTemp+';\n';
+                                        resultCode += 'stack[(int)(P + '+pos+')] = '+resultTemp+';\n';
                                         return true;
                                     }
                                 }
@@ -1725,7 +2166,6 @@ function translateExpression(stm)
 
 function translateIf(stm)
 {
-    console.log(pStack);
     console.log(p);
     resultCode += '//INICIA IF\n';
     let cond = translateExpression(stm.condition.expression);
@@ -1733,6 +2173,7 @@ function translateIf(stm)
     let falseLabel = create_l();
     let t = create_t(); // t = P
     resultCode += t + ' = P;\n';
+    resultCode += 'P = '+p[p.length-1]+';\n';
     resultCode += 'if('+ resultTemp  +' == 1) goto ' + trueLabel + ';\n';
     resultCode += 'goto ' + falseLabel + ';\n';
     resultCode += trueLabel + ':\n'
@@ -1751,6 +2192,7 @@ function translateIfElse(stm)
     let exitLabel = create_l();
     let t = create_t(); // t = P
     resultCode += t + ' = P;\n';
+    resultCode += 'P = '+p[p.length-1]+';\n';
     resultCode += 'if('+ resultTemp  +' == 1) goto ' + trueLabel + ';\n';
     resultCode += 'goto ' + falseLabel + ';\n';
     resultCode += trueLabel + ':\n'
@@ -1774,6 +2216,7 @@ function translateWhile(stm)
 
     let tp = create_t(); // t = P
     resultCode += tp + ' = P;\n';
+    resultCode += 'P = '+p[p.length-1]+';\n';
 
     breakStack.push(exitLabel);
     continueStack.push(returnLabel);
@@ -1805,6 +2248,7 @@ function translateDowhile(stm)
 
     let tp = create_t(); // t = P
     resultCode += tp + ' = P;\n';
+    resultCode += 'P = '+p[p.length-1]+';\n';
 
     breakStack.push(exitLabel);
     continueStack.push(returnLabel);
@@ -1837,6 +2281,7 @@ function translateFor(stm)
 
     let tp = create_t(); // t = P
     resultCode += tp + ' = P;\n';
+    resultCode += 'P = '+p[p.length-1]+';\n';
 
     let a = translate([stm.arg1]);
     let arg1 = resultTemp;
@@ -1852,7 +2297,7 @@ function translateFor(stm)
     resultCode += returnLabel+':\n';
     let b = translateExpression(stm.arg2);
     let arg2 = resultTemp;
-    resultCode += 'if('+arg2+' == 1) goto '+trueLabel+';\n';
+    resultCode += 'if('+arg2+' == 1) goto '+trueLabel+';//IF DE FOR\n'; 
     resultCode += 'goto '+exitLabel+';\n';
     resultCode += trueLabel+':\n';
 
@@ -1872,14 +2317,93 @@ function translateFor(stm)
     resultCode += '//TERMINA FOR\n'; 
 }
 
-function translateForOf(stm)
+function translateForOf(stm) // elements of array (any)
 {
+    let decType;
+    let arrayLength;
+    try
+    {
+        decType = stm.list.expression.value[0].expression.model;
+        arrayLength = stm.list.expression.value.length
+    }
+    catch(error)
+    {
 
+        decType = null; // decType = returntype de la variable
+        let stopFor = false;
+        for(let i=tsStack.length-1; i>=0; i--)
+        {
+            for(let j=0; j<tsStack[i].symbols.length; j++)
+            {
+                if(stm.list.expression.id == tsStack[i].symbols[j].id)
+                {
+                    decType = tsStack[i].symbols[j].returnType;
+                    arrayLength = tsStack[i].symbols[j].arrLen;
+                    stopFor = true;
+                    break;
+                }
+            }
+            if(stopFor) break;
+        }
+    }
+
+    decType = decType.toLowerCase();
+    
+    //let listType = stm.list.expression.model == 'Variable' ? 
+    // stm: id, list, statements
+    resultCode += '//EMPIEZA FOR OF\n'; 
+    let tp = create_t(); // t = P
+    resultCode += tp + ' = P;\n';
+    resultCode += 'P = '+p[p.length-1]+';\n';
+    // declarar variable stm.id
+    sPointer = pStack[pStack.length-1];
+    let a = translateExpression(stm.list);
+    let sym = new Symbol('Declaration', decType, stm.id, null, null, 'let', sPointer, 'Local', 0, -1, -1);
+    tsStack[tsStack.length-1].symbols.push(sym);
+    finalSymbolTable.push(sym);
+    pStack[pStack.length-1]++;
+    
+    let t0 = create_t(); 
+    let ti = create_t(); 
+    let tcounter = create_t();
+    let tindex = create_t();
+    let tarr = create_t(); 
+    let lr = create_l();
+    let lfor = create_l();
+    let lsalida = create_l();
+
+    t0 = resultTemp; // will contain the first position for list
+    
+    resultCode += ti+' = stack[(int)(P + '+sPointer+')];// variable i para recorrer\n';
+
+    resultCode += lr+':\n';
+    // if(index >= arrSize) goto Lfor
+    resultCode += 'if('+tindex+' < '+arrayLength+') goto '+lfor+';// if(index < arr.length)\n';
+    // goto Lsalida;
+    resultCode += 'goto '+lsalida+';\n';
+    // Lfor
+    resultCode += lfor+':\n';
+    resultCode += tarr+' = heap[(int)('+t0+' + '+tindex+')];\n';
+    resultCode += 'stack[(int)(P'+' + '+sPointer+')] = '+tarr+';// asignacion de la posicion array[index] a la variable i\n';
+    //traducir bloque
+    translate(stm.statements);
+    resultCode += ti+' = '+ti+' + 1;\n';
+    resultCode += tindex+' = '+tindex+' + 1;\n';
+    resultCode += 'goto '+lr+';\n';
+    // Lsalida:
+    resultCode += lsalida+':\n';
+    resultCode += '//TERMINA FOR OF\n'; 
 }
 
-function translateForIn(stm)
+function translateForIn(stm) // index of elements of array (string)
 {
-
+    console.log(stm);
+    resultCode += '//EMPIEZA FOR IN\n'; 
+    let tp = create_t(); // t = P
+    resultCode += tp + ' = P;\n';
+    resultCode += 'P = '+p[p.length-1]+';\n';
+    
+    resultCode += '//TERMINA FOR IN\n'; 
 }
 
 function translateSwitch(stm)
@@ -1888,6 +2412,7 @@ function translateSwitch(stm)
 
     let tp = create_t(); // t = P
     resultCode += tp + ' = P;\n';
+    resultCode += 'P = '+p[p.length-1]+';\n';
 
     translateExpression(stm.condition);
     switchId = resultTemp;
@@ -1961,76 +2486,86 @@ function translateConsolelog(stm)
 {
     //stm.param -> expression 
     //evaluate expression and determine the type
-    let value = translateExpression(stm.param);
-    if(typeof value == 'number')
-    {
-        if(Number.isInteger(value))
+    let params = Array.isArray(stm.param) ? stm.param : [stm.param];
+    resultCode += '//EMPIEZA IMPRIMIR\n';
+    params.forEach(param => {
+        let value = translateExpression(param);
+        if(typeof value == 'number')
         {
-            // print %d
-            resultCode += '//EMPIEZA IMPRIMIR ENTERO\n';
-            resultCode += 'printf("%d\\n", (int)' + resultTemp + ');\n';
-            resultCode += '//EMPIEZA IMPRIMIR ENTERO\n';
+            if(Number.isInteger(value))
+            {
+                // print %d
+                resultCode += '//EMPIEZA IMPRIMIR ENTERO\n';
+                resultCode += 'printf("%d", (int)' + resultTemp + ');\n';
+                resultCode += '//EMPIEZA IMPRIMIR ENTERO\n';
+            }
+            else
+            {
+                // print %f
+                resultCode += '//EMPIEZA IMPRIMIR DECIMAL\n';
+                resultCode += 'printf("%f", (float)' + resultTemp + ');\n';
+                resultCode += '//EMPIEZA IMPRIMIR DECIMAL\n';
+            }
         }
-        else
+        else if(typeof value == 'string')
         {
-            // print %f
-            resultCode += '//EMPIEZA IMPRIMIR DECIMAL\n';
-            resultCode += 'printf("%f\\n", (float)' + resultTemp + ');\n';
-            resultCode += '//EMPIEZA IMPRIMIR DECIMAL\n';
+            // print %s
+            //resultTemp has the beggining of the string
+            let t = create_t();
+            let beginLabel = create_l();
+            let endLabel = create_l();
+            resultCode += '//EMPIEZA IMPRIMIR CADENA\n';
+            /*resultCode += t + ' = (int)' + resultTemp + ';\n';
+            resultCode += beginLabel +':\n';
+            resultCode += 'printf("%c", (int)heap[(int)'+t+']);\n'
+            resultCode += t + ' = '+t+'+1;\n';
+            resultCode += 'if(heap[(int)'+t+'] != -1) goto ' + beginLabel + ';\n';
+            resultCode += 'goto ' + endLabel + ';\n'
+            resultCode += endLabel + ':\n';
+            resultCode += 'printf("\\n");\n'*/
+            let tr = create_t();
+            let t1 = create_t();
+            let l0 = create_l();
+            let l1 = create_l();
+            let ls = create_l();
+            let lsalida = create_l();
+            resultCode += tr+' = '+resultTemp+';\n';
+            resultCode += l0+':\n';
+            resultCode += t1+' = heap[(int)'+tr+'];\n';
+            resultCode += 'if('+t1+' == -1) goto '+lsalida+';\n';
+            resultCode += 'goto '+l1+';\n';
+            resultCode += lsalida+':\n';
+            resultCode += 'goto '+ls+';\n';
+            resultCode += l1+':\n';
+            resultCode += 'printf("%c", (int)'+t1+');\n';
+            resultCode += tr+' = '+tr+' + 1;\n';
+            resultCode += 'goto '+l0+';\n';
+            resultCode += ls+':\n';
+            //resultCode += 'printf("\\n");\n'
+            resultCode += '//TERMINA IMPRIMIR CADENA\n';
         }
-    }
-    else if(typeof value == 'string')
-    {
-        // print %s
-        //resultTemp has the beggining of the string
-        let t = create_t();
-        let beginLabel = create_l();
-        let endLabel = create_l();
-        resultCode += '//EMPIEZA IMPRIMIR CADENA\n';
-        /*resultCode += t + ' = (int)' + resultTemp + ';\n';
-        resultCode += beginLabel +':\n';
-        resultCode += 'printf("%c", (int)heap[(int)'+t+']);\n'
-        resultCode += t + ' = '+t+'+1;\n';
-        resultCode += 'if(heap[(int)'+t+'] != -1) goto ' + beginLabel + ';\n';
-        resultCode += 'goto ' + endLabel + ';\n'
-        resultCode += endLabel + ':\n';
-        resultCode += 'printf("\\n");\n'*/
-        let tr = create_t();
-        let t1 = create_t();
-        let l0 = create_l();
-        let l1 = create_l();
-        let lsalida = create_l();
-        resultCode += tr+' = '+resultTemp+';\n';
-        resultCode += l0+':\n';
-        resultCode += t1+' = heap[(int)'+tr+'];\n';
-        resultCode += 'if('+t1+' == -1) goto '+lsalida+';\n';
-        resultCode += 'goto '+l1+';\n';
-        resultCode += l1+':\n';
-        resultCode += 'printf("%c", (int)'+t1+');\n';
-        resultCode += tr+' = '+tr+' + 1;\n';
-        resultCode += 'goto '+l0+';\n';
-        resultCode += lsalida+':\n';
-        resultCode += 'printf("\\n");\n'
-        resultCode += '//TERMINA IMPRIMIR CADENA\n';
-    }
-    else if(typeof value == 'boolean')
-    {
-        // if 0 print false else print 1
-        let trueLabel = create_l();
-        let falseLabel = create_l();
-        let exitLabel = create_l();
-        resultCode += '//EMPIEZA IMPRIMIR BOOLEAN\n';
-        resultCode += 'if('+resultTemp+' == 1) goto '+trueLabel+';\n';
-        resultCode += 'goto '+falseLabel+';\n';
-        resultCode += trueLabel+':\n';
-        resultCode += 'printf("true\\n");\n';
-        resultCode += 'goto '+exitLabel+';\n';
-        resultCode += falseLabel+':\n';
-        resultCode += 'printf("false\\n");\n';
-        resultCode += 'goto '+exitLabel+';\n';
-        resultCode += exitLabel+':\n';
-        resultCode += '//TERMINA IMPRIMIR BOOLEAN\n';
-    }
+        else if(typeof value == 'boolean')
+        {
+            // if 0 print false else print 1
+            let trueLabel = create_l();
+            let falseLabel = create_l();
+            let exitLabel = create_l();
+            resultCode += '//EMPIEZA IMPRIMIR BOOLEAN\n';
+            resultCode += 'if('+resultTemp+' == 1) goto '+trueLabel+';\n';
+            resultCode += 'goto '+falseLabel+';\n';
+            resultCode += trueLabel+':\n';
+            resultCode += 'printf("true");\n';
+            resultCode += 'goto '+exitLabel+';\n';
+            resultCode += falseLabel+':\n';
+            resultCode += 'printf("false");\n';
+            resultCode += 'goto '+exitLabel+';\n';
+            resultCode += exitLabel+':\n';
+            resultCode += '//TERMINA IMPRIMIR BOOLEAN\n';
+        }
+    });
+    resultCode += 'printf("\\n");\n'
+    resultCode += '//TERMINA IMPRIMIR\n';
+    
     //resultCode += 'printf(\"'+ typeof value +'\");\n'
 }
 
@@ -2104,8 +2639,8 @@ function executeExpression(stm)
                                 if(typesMatch)
                                 {
                                     // add each parameter = value to ts
-                                    let sym = new Symbol('Declaration', paramType, paramName, paramValue, null, 'let', 'Local');
-                                    ts.symbols.push(sym);
+                                    let sym = new Symbol('Declaration', paramType, paramName, paramValue, null, 'let', 'Local', 0, -1, -1);
+                                    //ts.symbols.push(sym);
                                 }
                                 else
                                 {
@@ -2250,7 +2785,7 @@ function executeExpression(stm)
                     }
                     else continue;
                 }
-                semanticErrors.push(new Error('No existe el símbolo', 0, 0));
+                //semanticErrors.push(new Error('No existe el simbolo', 0, 0));
                 return null;
             }
             else

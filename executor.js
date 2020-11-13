@@ -129,21 +129,21 @@ var Error = function(message, row, col)
 };
 
 //var globalTS = new SymbolTable();
-var globalStack = new TsStack();
+/*var globalStack = new TsStack();
 var continueStack = [];
 var breakStack = [];
-var returnStack = [];
+var returnStack = [];*/
 
 //Error lists
 //var lexicalErrors = [];
 //var syntaxErrors = [];
 //var semanticErrors22 = [];
 //Console output
-var consoleOutput='>>';
+//var consoleOutput='>>';
 // AST URL
-var astAddress = 'https://dreampuf.github.io/GraphvizOnline/#digraph{';
-var dotData = '';
-var nodeCounter = 0;
+//var astAddress = 'https://dreampuf.github.io/GraphvizOnline/#digraph{';
+//var dotData = '';
+//var nodeCounter = 0;
 // flag declaration inside a function
 var insideFunction = false;
 // flag to check if called function is a child function
