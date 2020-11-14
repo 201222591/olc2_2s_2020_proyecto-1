@@ -2235,8 +2235,35 @@ function translateExpression(stm)
             if(stm.value1.model == 'ArrayAccess')
             {
                 resultCode += '//EMPIEZA ASIGNACION A ARREGLO\n';
-                resultCode += '//EN PROGRESO\n';
+                
+                // buscar posicion de la variable
+                // actualizar el valor en stack (modificar el heap si es necesario)
+                let index = tsStack.length-1;
+
+                for(let i=index; i>=0; i--)
+                {
+                    for(let j=0; j<tsStack[i].symbols.length; j++)
+                    {
+                        let sym = tsStack[i].symbols[j];
+                        if(sym.id == stm.value1.id.id)
+                        {
+                            translateExpression(stm.value2);
+                            let tv2 = resultTemp;
+                            translateExpression(stm.value1.index);
+                            let ti = resultTemp;
+                            let position = p[i] + sym.position;
+                            let ta = create_t();
+                            //resultCode += 'stack[(int)'+position+'] = '+resultTemp+';//asignar nuevo valor de la posicion de arreglo\n';
+                            resultCode += ta+' = stack[(int)'+position+'];\n';
+                            resultCode += 'heap[(int)('+ta+' + '+ti+')] = '+tv2+';//asignar nuevo valor de la posicion de arreglo\n';
+                            resultCode += '//TERMINA ASIGNACION A ARREGLO\n';
+                            return;
+                        }
+                    }
+                }
                 resultCode += '//TERMINA ASIGNACION A ARREGLO\n';
+                semanticErrors.push(new Error('La variable '+stm.value1.id.id+' no existe.', 0, 0));
+                
             }
             else if(stm.value1.model == 'Variable')
             {
