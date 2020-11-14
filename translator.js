@@ -1375,47 +1375,15 @@ function translateExpression(stm)
                     resultCode += '//TERMINA SUMA NUMEROS\n';
                     return 100.5;
                 }
-                else if(aType == 'string' && (bType == 'number' || bType == 'boolean'))
+                else if(aType == 'string' && bType == 'number')
                 {
-                   /*let l0 = create_l();
-                   let l1 = create_l();
-                   let l2 = create_l();
-                   let t2 = create_t();
-                   let numberToString = String(executeExpression(stm.value2));
-                   
-                   resultCode += '//EMPIEZA SUMA CADENA\n';
-                   resultCode += t1+' = H;\n';
-                   resultCode += l0+':\n';
-                   resultCode += t2+' = heap[(int)'+a+'];\n';
-                   resultCode += 'if('+t2+' != -1) goto '+l1+';\n';
-                   resultCode += 'goto '+l2+';\n';
-                   resultCode += l1+':\n';
-                   resultCode += 'heap[(int)H] = '+t2+';\n';
-                   resultCode += 'H = H+1;\n';
-                   resultCode += a+' = '+a+'+1;\n';
-                   resultCode += 'goto '+l0+';\n';
-                   resultCode += l2+':\n';
-
-                   for(let i=0; i<numberToString.length; i++)
-                   {
-                       resultCode += 'heap[(int)H] = '+numberToString.charCodeAt(i)+';\n';
-                       resultCode += 'H = H+1;\n';
-                   }
-                   resultCode += 'heap[(int)H] = -1;\n';
-                   resultCode += 'H = H+1;\n';
-
-                   resultCode += '';
-                   resultCode += '//TERMINA SUMA CADENA\n';
-                   resultTemp = t1;
-                   resultType = 'string';
-                   return 'string';*/
 
                    let l0 = create_l();
                    let l1 = create_l();
                    let l2 = create_l();
                    let t2 = create_t();
 
-                   resultCode += '//EMPIEZA SUMA CADENA\n';
+                   resultCode += '//EMPIEZA SUMA CADENA Y NUMERO\n';
                    resultCode += t1+' = H;\n';
                    resultCode += l0+':\n';
                    resultCode += t2+' = heap[(int)'+a+'];\n';
@@ -1489,20 +1457,20 @@ function translateExpression(stm)
                    resultCode += 'heap[(int)H] = -1;\n';
                    resultCode += 'H = H + 1;\n';
                    /////
-                   resultCode += '//TERMINA SUMA CADENA\n';
+                   resultCode += '//TERMINA SUMA CADENA Y NUMERO\n';
                    resultTemp = t1;
                    resultType = 'string';
                    return 'string';
 
                 }
-                else if((aType == 'number' || aType == 'boolean') && bType == 'string')
+                else if(aType == 'number' && bType == 'string')
                 {
                     let l0 = create_l();
                     let l1 = create_l();
                     let l2 = create_l();
                     let t2 = create_t();
                     let numberToString = String(executeExpression(stm.value1));
-                    resultCode += '//EMPIEZA SUMA CADENA\n';
+                    resultCode += '//EMPIEZA SUMA NUMERO CADENA\n';
                     resultCode += t1+' = H;\n';
 
                     /////
@@ -1535,7 +1503,7 @@ function translateExpression(stm)
                    resultCode += 'heap[(int)H] = (int)'+dig+' + 48;//CONVERT TO ASCII\n'
                    resultCode += 'H = H + 1;\n';
                    
-                   resultCode += num+' = (int)'+num+' / (int)'+factor+';\n';
+                   resultCode += num+' = (int)'+num+' % (int)'+factor+';\n';
                    resultCode += 'goto '+l20+';\n';
                    resultCode += l40+':\n';
                    /////
@@ -1556,7 +1524,137 @@ function translateExpression(stm)
                     resultCode += 'H = H + 1;\n';
  
                     resultCode += '';
-                    resultCode += '//TERMINA SUMA CADENA\n';
+                    resultCode += '//TERMINA SUMA NUMERO CADENA\n';
+                    resultTemp = t1;
+                    resultType = 'string';
+                    return 'string';
+                }
+                else if(aType == 'boolean' && bType == 'string')
+                {
+                    let lfalse = create_l();
+                    let ltrue = create_l();
+                    let lsalida = create_l();
+                    let t1 = create_t();
+                    let t2 = create_t();
+
+
+                    // true -> 116 114 117 101 
+                    // false-> 102 97  108 115 101
+
+                    resultCode += '//EMPIEZA SUMA BOOLEAN Y CADENA\n';
+                    resultCode += t1+' = H;\n';
+                    resultCode += 'if('+a+' == 0) goto '+lfalse+';\n';
+                    resultCode += 'goto '+ltrue+';\n';
+                    resultCode += lfalse+':\n//agregar a heap "false"\n';
+                    resultCode += 'heap[(int)H] = 102;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 97;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 108;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 115;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 101;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'goto '+lsalida+';\n';
+                    resultCode += ltrue+'://agregar a heap "true"\n';
+                    resultCode += 'heap[(int)H] = 116;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 114;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 117;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 101;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += lsalida+'://lsalida\n';
+
+                    let l3 = create_l();
+                    let l4 = create_l();
+                    let l5 = create_l();
+                    
+                    resultCode += l3+':\n';
+                    resultCode += t2+' = heap[(int)'+b+'];\n';
+                    resultCode += 'if('+t2+' != -1) goto '+l4+';\n';
+                    resultCode += 'goto '+l5+';\n';
+                    resultCode += l4+':\n';
+                    resultCode += 'heap[(int)H] = '+t2+';\n';
+                    resultCode += 'H = H + 1;\n';
+                    resultCode += b+' = '+b+'+1;\n';
+                    resultCode += 'goto '+l3+';\n';
+                    resultCode += l5+':\n';
+                    resultCode += 'heap[(int)H] = -1;\n';
+                    resultCode += 'H = H + 1;\n'; 
+                    resultCode += '//EMPIEZA SUMA BOOLEAN Y CADENA\n';
+
+                    resultTemp = t1;
+                    resultType = 'string';
+                    return 'string';
+
+                }
+                else if(aType == 'string' && bType == 'boolean')
+                {
+                    let lfalse = create_l();
+                    let ltrue = create_l();
+                    let lsalida = create_l();
+                    let t1 = create_t();
+                    let t2 = create_t();
+
+
+                    // true -> 116 114 117 101 
+                    // false-> 102 97  108 115 101
+
+                    resultCode += '//EMPIEZA SUMA CADENA Y BOOLEAN\n';
+                    resultCode += t1+' = H;\n';
+                    
+
+                    let l3 = create_l();
+                    let l4 = create_l();
+                    let l5 = create_l();
+                    
+                    resultCode += l3+':\n';
+                    resultCode += t2+' = heap[(int)'+a+'];\n';
+                    resultCode += 'if('+t2+' != -1) goto '+l4+';\n';
+                    resultCode += 'goto '+l5+';\n';
+                    resultCode += l4+':\n';
+                    resultCode += 'heap[(int)H] = '+t2+';\n';
+                    resultCode += 'H = H + 1;\n';
+                    resultCode += a+' = '+a+'+1;\n';
+                    resultCode += 'goto '+l3+';\n';
+                    resultCode += l5+':\n';
+                    //resultCode += 'heap[(int)H] = -1;\n';
+                    //resultCode += 'H = H + 1;\n'; 
+
+                    resultCode += 'if('+b+' == 0) goto '+lfalse+';\n';
+                    resultCode += 'goto '+ltrue+';\n';
+                    resultCode += lfalse+':\n//agregar a heap "false"\n';
+                    resultCode += 'heap[(int)H] = 102;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 97;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 108;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 115;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 101;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = -1;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'goto '+lsalida+';\n';
+                    resultCode += ltrue+'://agregar a heap "true"\n';
+                    resultCode += 'heap[(int)H] = 116;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 114;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 117;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = 101;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += 'heap[(int)H] = -1;\n';
+                    resultCode += 'H = H + 1;\n'
+                    resultCode += lsalida+'://lsalida\n';
+
+                    resultCode += '//EMPIEZA SUMA CADENA Y BOOLEAN\n';
+
                     resultTemp = t1;
                     resultType = 'string';
                     return 'string';
@@ -1567,6 +1665,7 @@ function translateExpression(stm)
                     let l1 = create_l();
                     let l2 = create_l();
                     let t2 = create_t();
+
                     resultCode += '//EMPIEZA SUMA CADENA Y CADENA\n';
                     resultCode += t1+' = H;\n';
                     resultCode += l0+':\n';
