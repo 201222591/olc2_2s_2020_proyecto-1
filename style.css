@@ -18,6 +18,7 @@
 .text-background{
     background-color: darkgrey;
     width: 1000;
+    color: purple;
 }
 
 .console-background{
