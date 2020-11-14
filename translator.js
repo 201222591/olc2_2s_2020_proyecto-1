@@ -460,7 +460,13 @@ function translateDeclaration(stm)
                         }
                         else if(dec.value.model == 'NewArray') // new array(expr)  expr-> expr,expr...
                         {
-
+                            let newValue = {
+                                model : 'ArrayAssignment',
+                                value : dec.value.expression
+                            };
+                            let newStm = stm;
+                            newStm.idList[0].value = newValue;
+                            translateDeclaration(newStm);
                         }
                     }
                 });
@@ -1433,11 +1439,36 @@ function translateExpression(stm)
                    let l30 = create_l();
                    let l40 = create_l();
 
-                   resultCode += factor+' = 1;\n';
+                   /*
+                   
+                    float num, temp, factor, dig;
+                    factor=1;
+                    num=4;
+                    temp=num;
+                    L0:
+                    if(temp > 1) goto L1;
+                    goto L2;
+                    L1:
+                    temp = (int)(temp/10);
+                    factor=factor*10;
+                    goto L0;
+                    L2:
+                    if(factor >1 ) goto L3;
+                    goto L4;
+                    L3:
+                    factor=factor/10;
+                    dig=num/factor;
+                    printf("%d\n",(int)dig);
+                    num=(int)num % (int)factor;
+                    goto L2;
+                    L4:
+                   */
+
+                   resultCode += factor+' = 1;//factor = 1\n';
                    resultCode += num+' = '+b+';\n';
                    resultCode += temp+' = '+num+';\n';
                    resultCode += l00+':\n';
-                   resultCode += 'if('+temp+' >= 1) goto '+l10+';\n';
+                   resultCode += 'if('+temp+' > 1) goto '+l10+';\n';
                    resultCode += 'goto '+l20+';\n';
                    resultCode += l10+':\n';
                    resultCode += temp+' = (int)('+temp+' / 10);\n';
@@ -1449,10 +1480,10 @@ function translateExpression(stm)
                    resultCode += l30+':\n';
                    resultCode += factor+' = '+factor+' / 10;\n';
                    resultCode += dig+' = '+num+' / '+factor+';\n';
-                   resultCode += 'heap[(int)H] = (int)'+dig+' + 48;//CONVERT TO ASCII\n'
+                   resultCode += 'heap[(int)H] = (int)('+dig+' + 48);//CONVERT TO ASCII\n'
                    resultCode += 'H = H + 1;\n';
                    
-                   resultCode += num+' = (int)'+num+' / (int)'+factor+';\n';
+                   resultCode += num+' = (int)'+num+' % (int)'+factor+';\n';
                    resultCode += 'goto '+l20+';\n';
                    resultCode += l40+':\n';
                    resultCode += 'heap[(int)H] = -1;\n';
@@ -2397,13 +2428,80 @@ function translateForOf(stm) // elements of array (any)
 
 function translateForIn(stm) // index of elements of array (string)
 {
-    console.log(stm);
+    let decType;
+    let arrayLength;
+    try
+    {
+        decType = stm.list.expression.value[0].expression.model;
+        arrayLength = stm.list.expression.value.length
+    }
+    catch(error)
+    {
+
+        decType = null; // decType = returntype de la variable
+        let stopFor = false;
+        for(let i=tsStack.length-1; i>=0; i--)
+        {
+            for(let j=0; j<tsStack[i].symbols.length; j++)
+            {
+                if(stm.list.expression.id == tsStack[i].symbols[j].id)
+                {
+                    decType = tsStack[i].symbols[j].returnType;
+                    arrayLength = tsStack[i].symbols[j].arrLen;
+                    stopFor = true;
+                    break;
+                }
+            }
+            if(stopFor) break;
+        }
+    }
+
+    decType = decType.toLowerCase();
+    
+    //let listType = stm.list.expression.model == 'Variable' ? 
+    // stm: id, list, statements
     resultCode += '//EMPIEZA FOR IN\n'; 
     let tp = create_t(); // t = P
     resultCode += tp + ' = P;\n';
     resultCode += 'P = '+p[p.length-1]+';\n';
+    // declarar variable stm.id
+    sPointer = pStack[pStack.length-1];
+    let a = translateExpression(stm.list);
+    let sym = new Symbol('Declaration', 'number', stm.id, null, null, 'let', sPointer, 'Local', 0, -1, -1);
+    tsStack[tsStack.length-1].symbols.push(sym);
+    finalSymbolTable.push(sym);
+    pStack[pStack.length-1]++;
     
-    resultCode += '//TERMINA FOR IN\n'; 
+    let t0 = create_t(); 
+    let ti = create_t(); 
+    let tcounter = create_t();
+    let tindex = create_t();
+    let tarr = create_t(); 
+    let lr = create_l();
+    let lfor = create_l();
+    let lsalida = create_l();
+
+    t0 = resultTemp; // will contain the first position for list
+    
+    resultCode += ti+' = stack[(int)(P + '+sPointer+')];// variable i para recorrer\n';
+
+    resultCode += lr+':\n';
+    // if(index >= arrSize) goto Lfor
+    resultCode += 'if('+tindex+' < '+arrayLength+') goto '+lfor+';// if(index < arr.length)\n';
+    // goto Lsalida;
+    resultCode += 'goto '+lsalida+';\n';
+    // Lfor
+    resultCode += lfor+':\n';
+    resultCode += tarr+' = '+tindex+';\n';
+    resultCode += 'stack[(int)(P'+' + '+sPointer+')] = '+tarr+';// asignacion de la posicion array[index] a la variable i\n';
+    //traducir bloque
+    translate(stm.statements);
+    resultCode += ti+' = '+ti+' + 1;\n';
+    resultCode += tindex+' = '+tindex+' + 1;\n';
+    resultCode += 'goto '+lr+';\n';
+    // Lsalida:
+    resultCode += lsalida+':\n';
+    resultCode += '//TERMINA FOR IN\n'
 }
 
 function translateSwitch(stm)
