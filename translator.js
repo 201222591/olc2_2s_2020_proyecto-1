@@ -1098,29 +1098,28 @@ function translateExpression(stm)
                             //console.log(stm.value[i].expression.value);
                             elements.push(stm.value[i].expression.value);
                             // create Declaration
-                            let newArrayAssignment = {
-                                model : 'ArrayAssignment',
-                                value : elements
-                            };
-
-                            let newVarElement = {
-                                model : 'VarElement',
-                                id : arrayID,
-                                type : arrayType,
-                                array : '[]', 
-                                value : newArrayAssignment
-                            };
-
-                            let newDeclaration = {
-                                model : 'Declaration',
-                                scope : 'let',
-                                idList : [newVarElement]
-                            };
-
-                            //console.log(newDeclaration);
-                            translate([newDeclaration]);
-                            break;
                         }
+                        let newArrayAssignment = {
+                            model : 'ArrayAssignment',
+                            value : elements
+                        };
+
+                        let newVarElement = {
+                            model : 'VarElement',
+                            id : arrayID,
+                            type : arrayType,
+                            array : '[]', 
+                            value : newArrayAssignment
+                        };
+
+                        let newDeclaration = {
+                            model : 'Declaration',
+                            scope : 'let',
+                            idList : [newVarElement]
+                        };
+
+                        //console.log(newDeclaration);
+                        translate([newDeclaration]);
                         
                     }
                     else if(arrayLength == 3)
@@ -2195,9 +2194,10 @@ function translateExpression(stm)
             let aType = resultType;
             let val2 = translateExpression(stm.value2);
             let b = resultTemp;
+            let bType = resultType;
             let val3 = translateExpression(stm.value3);
             let c = resultTemp;
-            
+
             let l1 = create_l();
             let l2 = create_l();
             let l3 = create_l();
@@ -2217,6 +2217,11 @@ function translateExpression(stm)
                 resultCode += l3+':\n';
                 resultCode += '//TERMINA TERNARIO\n';
                 resultTemp = t1;
+                resultType = bType;
+                let retValue;
+                if(resultType == 'number') return 100.5;
+                else if(resultType == 'boolean') return true;
+                else if(resultType == 'string') return 'string';
             }
             else
             {
@@ -2243,7 +2248,7 @@ function translateExpression(stm)
                     for(let j=0; j<tsStack[i].symbols.length; j++)
                     {
                         let sym = tsStack[i].symbols[j];
-                        let pos = /*p[i] + */sym.position;
+                        let pos = p[i] + sym.position;
                         if(sym.scope != 'const')
                         {
                             if(sym.id == stm.value1.id)
@@ -2255,13 +2260,13 @@ function translateExpression(stm)
                                     if(sym.returnType == 'number' || sym.returnType == 'boolean')
                                     {
                                         // save new value in the stack
-                                        resultCode += 'stack[(int)(P + '+pos+')] = '+resultTemp+';\n';
+                                        resultCode += 'stack[(int)'+pos+'] = '+resultTemp+';\n';
                                         return true;
                                     }
                                     else if(sym.returnType == 'string')
                                     {
                                         // save new value
-                                        resultCode += 'stack[(int)(P + '+pos+')] = '+resultTemp+';\n';
+                                        resultCode += 'stack[(int)'+pos+'] = '+resultTemp+';\n';
                                         return true;
                                     }
                                 }
@@ -2351,10 +2356,10 @@ function translateWhile(stm)
     breakStack.push(exitLabel);
     continueStack.push(returnLabel);
 
-    resultCode += returnLabel+':\n';
+    resultCode += returnLabel+'://etiqueta de retorno WHILE\n';
     let cond = translateExpression(stm.condition.expression);
     let t0 = resultTemp;
-    resultCode += 'if('+t0+' == 1) goto '+trueLabel+';\n';
+    resultCode += 'if('+t0+' == 1) goto '+trueLabel+';//if para verificar\n';
     resultCode += 'goto '+exitLabel+';\n';
     resultCode += trueLabel+':\n';
     
@@ -2892,7 +2897,7 @@ function executeExpression(stm)
                     else continue;
                 }
             }
-            semanticErrors.push(new Error('No se encontró el símbolo '+stm.id, 0, 0));
+            semanticErrors.push(new Error('No se encontro el simbolo '+stm.id, 0, 0));
             return null;
         }
         else if(stm.model == 'Pop')
@@ -2919,7 +2924,7 @@ function executeExpression(stm)
                     else continue;
                 }
             }
-            semanticErrors.push(new Error('No se encontró el símbolo '+stm.id, 0, 0));
+            semanticErrors.push(new Error('No se encontro el simbolo '+stm.id, 0, 0));
             return null;
         }
         else if(stm.model == 'Length')
@@ -2946,7 +2951,7 @@ function executeExpression(stm)
                     else continue;
                 }
             }
-            semanticErrors.push(new Error('No se encontró el símbolo '+stm.id, 0, 0));
+            semanticErrors.push(new Error('No se encontro el simbolo '+stm.id, 0, 0));
             return null;
         }
         else if(stm.model == 'ArrayAssignment')
@@ -2987,7 +2992,7 @@ function executeExpression(stm)
             }
             else
             {
-                semanticErrors.push(new Error('Valor de índice inválido: '+arrayIndex,0, 0));
+                semanticErrors.push(new Error('Valor de indice invalido: '+arrayIndex,0, 0));
                 return null;
             }
         }
